@@ -22,7 +22,7 @@
 		<!-- JUnit -->
 		<junit.version>3.8.1</junit.version>
 		<!-- Java JDK -->
-		<project.build.java>1.8</project.build.java>
+		<project.build.java>1.7</project.build.java>
 		<!-- Encoding -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- Plugin versions -->
