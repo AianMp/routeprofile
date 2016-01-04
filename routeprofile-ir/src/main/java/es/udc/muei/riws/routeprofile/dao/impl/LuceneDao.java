@@ -19,6 +19,8 @@ import org.apache.lucene.util.Version;
 import es.udc.muei.riws.routeprofile.dao.IRDao;
 import es.udc.muei.riws.routeprofile.model.dto.FilterDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
+import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
+import es.udc.muei.riws.routeprofile.model.exception.IRException;
 
 public class LuceneDao implements IRDao {
 
@@ -44,6 +46,12 @@ public class LuceneDao implements IRDao {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+		return null;
+	}
+
+	@Override
+	public UserDTO createUser(UserDTO newUser) throws IRException {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }
