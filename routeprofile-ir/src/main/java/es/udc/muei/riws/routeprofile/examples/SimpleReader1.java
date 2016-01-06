@@ -15,6 +15,10 @@ import org.apache.lucene.store.FSDirectory;
  *
  */
 public class SimpleReader1 {
+    private enum Fields {
+	DISTANCE, LOOP, ELEVATION_GAIN_UP_HILL, ELEVATION_MAX, ELEVATION_GAIN_DOWN_HILL, ELEVATION_MIN
+    }
+
     public static void main(String[] args) throws IOException, ParseException {
 	if (args.length != 1) {
 	    System.out.println("Usage: java SimpleReader1 <index_folder>");
@@ -26,11 +30,15 @@ public class SimpleReader1 {
 		Document doc = indexReader.document(i);
 		System.out.println("Documento " + i);
 		// doc.get() returns null for the fields that were not stored
-		System.out.println("modelRef = " + doc.get("modelRef"));
-		System.out.println("modelAcronym = " + doc.get("modelAcronym"));
-		System.out.println("modelDescription = " + doc.get("modelDescription"));
-		System.out.println("theoreticalContent = " + doc.get("theoreticalContent"));
-		System.out.println("practicalContent = " + doc.get("practicalContent"));
+		System.out.println("" + Fields.DISTANCE + " = " + doc.get("PR_" + Fields.DISTANCE.name()));
+		System.out.println("" + Fields.ELEVATION_GAIN_UP_HILL + " = "
+			+ doc.get("PR_" + Fields.ELEVATION_GAIN_UP_HILL.name()));
+		System.out.println("" + Fields.ELEVATION_MAX + " = " + doc.get("PR_" + Fields.ELEVATION_MAX.name()));
+		System.out.println("" + Fields.ELEVATION_GAIN_DOWN_HILL + " = "
+			+ doc.get("PR_" + Fields.ELEVATION_GAIN_DOWN_HILL.name()));
+		System.out.println("" + Fields.ELEVATION_MIN + " = " + doc.get("PR_" + Fields.ELEVATION_MIN.name()));
+		System.out.println("" + Fields.LOOP + " = " + doc.get("PR_" + Fields.LOOP.name()));
+		System.out.println(" ---------------------- ");
 	    }
 	    for (int i = 0; i < indexReader.maxDoc(); i++) {
 		Document doc = indexReader.document(i);
