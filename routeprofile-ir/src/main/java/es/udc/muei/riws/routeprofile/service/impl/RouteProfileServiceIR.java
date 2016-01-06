@@ -12,17 +12,22 @@ import es.udc.muei.riws.routeprofile.service.RouteProfileService;
 
 public class RouteProfileServiceIR implements RouteProfileService {
 
+	private IRDao irDao = null;
+
+	public RouteProfileServiceIR() {
+		this.irDao = IRDaoFactory.createInstance();
+	}
+
 	@Override
 	public Collection<RouteDTO> findRoutes(Collection<FilterDTO> filters) {
-		IRDao dao = IRDaoFactory.createInstance();
-		return (dao.findRoutes(filters));
+		return (irDao.findRoutes(filters));
 	}
 
 	@Override
 	public UserDTO signUp(String username, String password) throws IRException {
 		UserDTO newUser = new UserDTO(username, password);
 		try {
-			return (IRDaoFactory.createInstance().createUser(newUser));
+			return (irDao.createUser(newUser));
 		} catch (IRException e) {
 			return (null);
 		}
@@ -30,18 +35,16 @@ public class RouteProfileServiceIR implements RouteProfileService {
 
 	@Override
 	public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException {
-		return (IRDaoFactory.createInstance().findUsers(usernames));
+		return (irDao.findUsers(usernames));
 	}
 
 	@Override
-	public boolean updateUser(UserDTO updatedUser) {
-		return false;
-		// TODO Auto-generated method stub
-
+	public void updateUser(UserDTO updatedUser) throws IRException {
+		irDao.updateUser(updatedUser);
 	}
 
 	@Override
 	public Collection<RouteDTO> findRoutesById(Collection<String> routeIds) throws IRException {
-		return (IRDaoFactory.createInstance().findRoutesById(routeIds));
+		return (irDao.findRoutesById(routeIds));
 	}
 }

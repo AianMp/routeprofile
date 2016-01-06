@@ -2,6 +2,7 @@ package es.udc.muei.riws.routeprofile.dao.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,7 +25,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -37,11 +37,20 @@ import es.udc.muei.riws.routeprofile.model.exception.IRException;
 
 public class LuceneDao implements IRDao {
 
-	private static final String indexPath = "/home/jose/MASTER/RIWS/RI/solr-4.8.1/example/solr/collection1/data/index";
-	private Properties props = null;
+	private static final String LUCENE_FILE_PATH = "lucene.properties";
+	private static final String INDEX_PROPERTY_ID = "lucene.index.file";
+	private String indexPath = null;
 
 	public LuceneDao() {
-		// TODO: Load the properties from lucene.properties file.
+		ClassLoader loader = LuceneDao.class.getClassLoader();
+		Properties props = new Properties();
+		try {
+			InputStream resourceStream = loader.getResourceAsStream(LUCENE_FILE_PATH);
+			props.load(resourceStream);
+			this.indexPath = props.getProperty(INDEX_PROPERTY_ID);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -64,6 +73,13 @@ public class LuceneDao implements IRDao {
 
 	@Override
 	public UserDTO createUser(UserDTO newUser) throws IRException {
+
+		Collection<String> usernames = new ArrayList<String>();
+		usernames.add(newUser.getUsername());
+		Collection<UserDTO> users = findUsers(usernames);
+		if (users.contains(newUser))
+			return (newUser);
+
 		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
 		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
 		config.setOpenMode(OpenMode.APPEND);
@@ -78,9 +94,31 @@ public class LuceneDao implements IRDao {
 			writer.close();
 			return (newUser);
 		} catch (CorruptIndexException e) {
-			throw new IRException();
+			throw new IRException("Corrupt index", e);
 		} catch (IOException e) {
-			throw new IRException();
+			throw new IRException("Error I/O", e);
+		}
+	}
+
+	@Override
+	public void updateUser(UserDTO updatedUser) throws IRException {
+		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
+		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
+		config.setOpenMode(OpenMode.APPEND);
+		try {
+			IndexWriter writer = new IndexWriter(FSDirectory.open(new File(indexPath)), config);
+			Document doc = new Document();
+			doc.add(new StringField("username", updatedUser.getUsername(), Field.Store.YES));
+			doc.add(new StringField("password", updatedUser.getPassword(), Field.Store.YES));
+			doc.add(new TextField("routes", routeIdsToStr(updatedUser), Field.Store.YES));
+
+			writer.updateDocument(new Term("username", updatedUser.getUsername()), doc);
+			writer.commit();
+			writer.close();
+		} catch (CorruptIndexException e) {
+			throw new IRException("Corrupt index", e);
+		} catch (IOException e) {
+			throw new IRException("Error I/O", e);
 		}
 	}
 
@@ -94,13 +132,17 @@ public class LuceneDao implements IRDao {
 				String valueQuery = "";
 				for (String username : usernames)
 					valueQuery += (valueQuery.isEmpty() ? "" : " ") + username;
-				Query query = new TermQuery(new Term("username", valueQuery));
+				QueryParser parser = new QueryParser(Version.LUCENE_48, "username", new StandardAnalyzer(
+						Version.LUCENE_48));
+				Query query = parser.parse(valueQuery);
 				TopDocs topDocs = searcher.search(query, usernames.size());
 				result = convertToUserDTO(reader, topDocs);
 			}
 			return (result);
 		} catch (IOException e) {
-			throw new IRException();
+			throw new IRException("Error I/O", e);
+		} catch (ParseException e) {
+			throw new IRException("Error when parse the query", e);
 		}
 	}
 
@@ -111,17 +153,21 @@ public class LuceneDao implements IRDao {
 		try {
 			String routeIdsQueryValue = "*";
 			if (routeIds != null && !routeIds.isEmpty()) {
+				routeIdsQueryValue = "";
 				for (String id : routeIds)
 					routeIdsQueryValue += (routeIdsQueryValue.isEmpty() ? "" : " ") + id;
 			}
 			IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 			IndexSearcher searcher = new IndexSearcher(reader);
-			Query query = new TermQuery(new Term("url", routeIdsQueryValue));
+			QueryParser parser = new QueryParser(Version.LUCENE_48, "url", new StandardAnalyzer(Version.LUCENE_48));
+			Query query = parser.parse(routeIdsQueryValue);
 			TopDocs topDocs = searcher.search(query, routeIds.size());
 			result = convertToRouteDTO(reader, topDocs);
 			return (result);
 		} catch (IOException e) {
-			throw new IRException();
+			throw new IRException("Error I/O", e);
+		} catch (ParseException e) {
+			throw new IRException("Error when parse the query", e);
 		}
 	}
 
@@ -138,13 +184,14 @@ public class LuceneDao implements IRDao {
 		Collection<UserDTO> result = new ArrayList<UserDTO>();
 		try {
 			for (int i = 0; i < docs.totalHits; i++) {
-				String routeIdsStr = reader.document(docs.scoreDocs[i].doc).get("routeIds");
+				String routeIdsStr = reader.document(docs.scoreDocs[i].doc).get("routes");
 				result.add(new UserDTO(reader.document(docs.scoreDocs[i].doc).get("username"), reader.document(
-						docs.scoreDocs[i].doc).get("password"), Arrays.asList(routeIdsStr.split(","))));
+						docs.scoreDocs[i].doc).get("password"), routeIdsStr != null ? Arrays.asList(routeIdsStr
+						.split(",")) : new ArrayList<String>()));
 			}
 			return (result);
 		} catch (IOException e) {
-			throw new IRException();
+			throw new IRException("Error when converting documents to " + UserDTO.class, e);
 		}
 	}
 
@@ -166,7 +213,8 @@ public class LuceneDao implements IRDao {
 			}
 			return (result);
 		} catch (IOException e) {
-			throw new IRException();
+			throw new IRException("Error when converting documents to " + UserDTO.class, e);
 		}
 	}
+
 }

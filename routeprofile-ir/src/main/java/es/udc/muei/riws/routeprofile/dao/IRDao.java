@@ -13,6 +13,8 @@ public interface IRDao {
 
 	public UserDTO createUser(UserDTO newUser) throws IRException;
 
+	public void updateUser(UserDTO updatedUser) throws IRException;
+
 	public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException;
 
 	public Collection<RouteDTO> findRoutesById(Collection<String> routeIds) throws IRException;
