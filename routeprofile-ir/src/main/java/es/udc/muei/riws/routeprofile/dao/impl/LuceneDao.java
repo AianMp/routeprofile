@@ -38,7 +38,7 @@ import es.udc.muei.riws.routeprofile.model.exception.IRException;
 public class LuceneDao implements IRDao {
 
 	private static final String LUCENE_FILE_PATH = "lucene.properties";
-	private static final String INDEX_PROPERTY_ID = "lucene.index.file";
+	private static final String INDEX_PROPERTY_ID = "lucene.index.path";
 	private String indexPath = null;
 
 	public LuceneDao() {
