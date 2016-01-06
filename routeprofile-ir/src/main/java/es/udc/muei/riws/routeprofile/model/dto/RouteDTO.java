@@ -4,107 +4,123 @@ import java.io.Serializable;
 
 public class RouteDTO implements Serializable {
 
-	private static final long serialVersionUID = -4281986308299917975L;
+    private static final long serialVersionUID = -4281986308299917975L;
 
-	private String id = null;
-	private Double distance = null;
-	private Boolean looped = null;
-	private Double maxElevation = null;
-	private Double minElevation = null;
-	private Double elevationGainUp = null;
-	private Double elevationGainDown = null;
-	private Boolean done = null;
+    private String id = null;
+    private String distance = null;
+    private Boolean looped = null;
+    private String maxElevation = null;
+    private String minElevation = null;
+    private String elevationGainUp = null;
+    private String elevationGainDown = null;
+    private Boolean done = null;
 
-	public RouteDTO(String id, Double distance, Boolean looped, Double maxElevation, Double minElevation,
-			Double elevationGainUp, Double elevationGainDown) {
-		this.id = id;
-		this.distance = distance;
-		this.looped = looped;
-		this.maxElevation = maxElevation;
-		this.minElevation = minElevation;
-		this.elevationGainUp = elevationGainUp;
-		this.elevationGainDown = elevationGainDown;
-	}
+    public RouteDTO(String id, String distance, Boolean looped, String maxElevation, String minElevation,
+	    String elevationGainUp, String elevationGainDown, boolean done) {
+	this.id = id;
+	this.distance = distance;
+	this.looped = looped;
+	this.maxElevation = maxElevation;
+	this.minElevation = minElevation;
+	this.elevationGainUp = elevationGainUp;
+	this.elevationGainDown = elevationGainDown;
+	this.done = done;
+    }
 
-	public String getId() {
-		return id;
-	}
+    public String getId() {
+	return id;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public void setId(String id) {
+	this.id = id;
+    }
 
-	public Double getDistance() {
-		return distance;
-	}
+    public String getDistance() {
+	return distance;
+    }
 
-	public void setDistance(Double distance) {
-		this.distance = distance;
-	}
+    public void setDistance(String distance) {
+	this.distance = distance;
+    }
 
-	public Boolean getLooped() {
-		return looped;
-	}
+    public Boolean getLooped() {
+	return looped;
+    }
 
-	public void setLooped(Boolean looped) {
-		this.looped = looped;
-	}
+    public void setLooped(Boolean looped) {
+	this.looped = looped;
+    }
 
-	public Double getMaxElevation() {
-		return maxElevation;
-	}
+    public String getMaxElevation() {
+	return maxElevation;
+    }
 
-	public void setMaxElevation(Double maxElevation) {
-		this.maxElevation = maxElevation;
-	}
+    public void setMaxElevation(String maxElevation) {
+	this.maxElevation = maxElevation;
+    }
 
-	public Double getMinElevation() {
-		return minElevation;
-	}
+    public String getMinElevation() {
+	return minElevation;
+    }
 
-	public void setMinElevation(Double minElevation) {
-		this.minElevation = minElevation;
-	}
+    public void setMinElevation(String minElevation) {
+	this.minElevation = minElevation;
+    }
 
-	public Double getElevationGainUp() {
-		return elevationGainUp;
-	}
+    public String getElevationGainUp() {
+	return elevationGainUp;
+    }
 
-	public void setElevationGainUp(Double elevationGainUp) {
-		this.elevationGainUp = elevationGainUp;
-	}
+    public void setElevationGainUp(String elevationGainUp) {
+	this.elevationGainUp = elevationGainUp;
+    }
 
-	public Double getElevationGainDown() {
-		return elevationGainDown;
-	}
+    public String getElevationGainDown() {
+	return elevationGainDown;
+    }
 
-	public void setElevationGainDown(Double elevationGainDown) {
-		this.elevationGainDown = elevationGainDown;
-	}
+    public void setElevationGainDown(String elevationGainDown) {
+	this.elevationGainDown = elevationGainDown;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
-	}
+    public Boolean getDone() {
+	return done;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		RouteDTO other = (RouteDTO) obj;
-		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		return true;
-	}
+    public void setDone(Boolean done) {
+	this.done = done;
+    }
+
+    @Override
+    public int hashCode() {
+	final int prime = 31;
+	int result = 1;
+	result = prime * result + ((id == null) ? 0 : id.hashCode());
+	return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+	if (this == obj)
+	    return true;
+	if (obj == null)
+	    return false;
+	if (getClass() != obj.getClass())
+	    return false;
+	RouteDTO other = (RouteDTO) obj;
+	if (id == null) {
+	    if (other.id != null)
+		return false;
+	} else if (!id.equals(other.id))
+	    return false;
+	return true;
+    }
+
+    @Override
+    public String toString() {
+	return "RouteDTO [id=" + id + ", distance=" + distance + ", looped=" + looped + ", maxElevation=" + maxElevation
+		+ ", minElevation=" + minElevation + ", elevationGainUp=" + elevationGainUp + ", elevationGainDown="
+		+ elevationGainDown + ", done=" + done + "]";
+    }
 
 }

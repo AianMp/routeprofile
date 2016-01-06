@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+<h:body>
+	<ui:composition template="/layout/template.xhtml">
+		<ui:define name="content">
+			<f:view>
+				<div class="bs-docs-section">
+					<div class="row">
+						<div class="page-header">
+							<h1>Búsqueda por filtros</h1>
+						</div>
+						<div class="row">
+							<div class="col-sm-12">
+								<div class="panel panel-default">
+									<div class="panel-heading">
+										<h3 class="panel-title">Añadir filtros</h3>
+									</div>
+
+									<div class="panel-body">
+										<div class="row">
+											<div class="col-md-6">
+												<h:form>
+													<div class="panel panel-default">
+														<div class="panel-body">
+															<div class="row">
+																<div class="col-md-4 form-group">
+																	<label>Campo</label>
+																	<h:selectOneMenu class="form-control input-sm"
+																		value="#{searchFilterBean.field}">
+																		<f:selectItem itemLabel=" Selecciona " />
+																		<f:selectItems value="#{searchFilterBean.itemsField}" />
+																	</h:selectOneMenu>
+																</div>
+																<div class="col-md-4 form-group">
+																	<label>Mínimo</label>
+																	<h:inputText value="#{searchFilterBean.min}"
+																		type="text" class="form-control input-sm" />
+																</div>
+																<div class="col-md-4 form-group">
+																	<label>Máximo</label>
+																	<h:inputText value="#{searchFilterBean.max}"
+																		type="text" class="form-control input-sm" />
+																</div>
+															</div>
+															<div class="row">
+																<div class="col-md-4">
+																	<div class="pull-left">
+																		<h:commandLink type="button"
+																			class="btn btn-outline btn-default"
+																			action="#{searchFilterBean.addFilterRange}">
+																			<span class="fa fa-search "> Añadir filtro</span>
+																			<f:ajax execute="@form" render="filters routes" />
+																		</h:commandLink>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</div>
+												</h:form>
+											</div>
+											<div class="col-md-6">
+												<h:form>
+													<div class="panel panel-default">
+														<div class="panel-body">
+															<div class="row">
+																<div class="col-md-4 form-group">
+																	<label>Campo</label>
+																	<h:selectOneMenu class="form-control input-sm"
+																		value="#{searchFilterBean.field}">
+																		<f:selectItem itemLabel=" Selecciona " />
+																		<f:selectItems value="#{searchFilterBean.itemsField}" />
+																	</h:selectOneMenu>
+																</div>
+																<div class="col-md-4 form-group">
+																	<label>Valor</label>
+																	<h:inputText value="#{searchFilterBean.value}"
+																		type="text" class="form-control input-sm" />
+																</div>
+															</div>
+															<div class="row">
+																<div class="col-md-4">
+																	<div class="pull-left">
+																		<h:commandLink type="button"
+																			class="btn btn-outline btn-default"
+																			action="#{searchFilterBean.addFilterValue}">
+																			<span class="fa fa-search "> Añadir filtro</span>
+																			<f:ajax execute="@form" render="filters routes" />
+																		</h:commandLink>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</div>
+												</h:form>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<h:panelGroup id="filters">
+								<ui:repeat var="filter" value="#{searchFilterBean.filters}">
+									<div class="col-sm-4">
+										<div class="panel panel-default">
+											<div class="panel-heading">
+												<h3 class="panel-title">#{filter.field}</h3>
+											</div>
+											<h:panelGroup
+												rendered="#{not (filter.field == 'PR_LOOP' || filter.field == 'url')}">
+												<div class="panel-body">
+													<h5>
+														Máximo <span class="label label-default">#{filter.max}</span>
+													</h5>
+													<h5>
+														Mínimo <span class="label label-default">#{filter.min}</span>
+													</h5>
+												</div>
+											</h:panelGroup>
+											<h:panelGroup
+												rendered="#{filter.field == 'PR_LOOP' || filter.field == 'url'}">
+												<div class="panel-body">
+													<h5>
+														Valor <span class="label label-default">#{filter.value}</span>
+													</h5>
+												</div>
+											</h:panelGroup>
+										</div>
+									</div>
+									<!-- /.col-sm-4 -->
+								</ui:repeat>
+							</h:panelGroup>
+						</div>
+					</div>
+					<div class="row">
+						<div class="page-header">
+							<h1>Rutas</h1>
+						</div>
+						<div class="row">
+							<h:panelGroup id="routes">
+								<ui:repeat var="route" value="#{searchFilterBean.routes}">
+									<div class="col-sm-12">
+										<div class="panel panel-default">
+											<div class="panel-heading">
+												<h3 class="panel-title">#{route.id}</h3>
+											</div>
+
+											<div class="panel-body">
+												<h5>
+													Distancia <span class="label label-default">#{route.distance}</span>
+												</h5>
+												<h5>
+													Desnivel acumulado subiendo <span
+														class="label label-default">#{route.elevationGainUp}</span>
+												</h5>
+												<h5>
+													Altitud máxima <span class="label label-default">#{route.maxElevation}</span>
+												</h5>
+												<h5>
+													Desnivel acumulado bajando <span
+														class="label label-default">#{route.elevationGainDown}</span>
+												</h5>
+												<h5>
+													Altitud mínima <span class="label label-default">#{route.minElevation}</span>
+												</h5>
+												<h5>
+													Circular <span class="label label-default">#{route.looped}</span>
+												</h5>
+											</div>
+
+										</div>
+									</div>
+									<!-- /.col-sm-4 -->
+								</ui:repeat>
+							</h:panelGroup>
+						</div>
+					</div>
+				</div>
+
+			</f:view>
+		</ui:define>
+	</ui:composition>
+</h:body>
+</html>

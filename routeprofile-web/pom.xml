@@ -12,16 +12,65 @@
 	<packaging>war</packaging>
 	<name>routeprofile-web</name>
 	<url>http://maven.apache.org</url>
-	
-	
-	<build>
-		<finalName>routeprofile-web</finalName>
-	</build>
+	<properties>
+		<mojarra.version>2.2.6</mojarra.version>
+		<primefaces.version>4.0</primefaces.version>
+		<primefaces.extensions.version>2.0.0</primefaces.extensions.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>es.udc.muei.riws.routeprofile</groupId>
 			<artifactId>routeprofile-ir</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<!-- ***** JSF: Mojarra, PrimeFaces ***** -->
+		<dependency>
+			<groupId>com.sun.faces</groupId>
+			<artifactId>jsf-api</artifactId>
+			<version>${mojarra.version}</version>
+			<!-- <scope>provided</scope> -->
+		</dependency>
+
+		<dependency>
+			<groupId>com.sun.faces</groupId>
+			<artifactId>jsf-impl</artifactId>
+			<version>${mojarra.version}</version>
+			<!-- <scope>provided</scope> -->
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.4</version>
+		</dependency>
+
+		<!-- Primefaces -->
+		<dependency>
+			<groupId>org.primefaces</groupId>
+			<artifactId>primefaces</artifactId>
+			<version>${primefaces.version}</version>
+		</dependency>
+		<!-- Primefaces Extensions -->
+		<dependency>
+			<groupId>org.primefaces.extensions</groupId>
+			<artifactId>primefaces-extensions</artifactId>
+			<version>${primefaces.extensions.version}</version>
+		</dependency>
 	</dependencies>
+	<build>
+		<finalName>routeprofile-web</finalName>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<webXml>src/main/webapp/WEB-INF/web.xml</webXml>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

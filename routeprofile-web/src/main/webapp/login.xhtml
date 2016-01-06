@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+<h:body>
+	<ui:composition template="/layout/template.xhtml">
+		<ui:define name="content">
+			<f:view>
+				<div class="row">
+					<ol class="breadcrumb">
+						<li class="active">Inicio de sesión</li>
+					</ol>
+				</div>
+				<div class="row">
+					<h1>Sing up/in</h1>
+					<div class="col-md-4"></div>
+					<div class="col-md-4">
+						<h:form class="form-signin" role="form">
+							<div class="bs-example">
+								<div class="panel panel-primary">
+									<div class="panel-heading">
+										<h3 class="panel-title">Sing up/in</h3>
+									</div>
+									<div class="panel-body">
+										<div class="form-group">
+											<h:outputLabel for="inputLogin">Usuario</h:outputLabel>
+											<h:inputText value="#{loginBean.userName}" type="text"
+												required="true" class="form-control" id="inputLogin"
+												requiredMessage="Es necesario introducir una contraseña">
+											</h:inputText>
+										</div>
+										<div class="form-group">
+											<h:outputLabel for="inputPass">Contraseña</h:outputLabel>
+											<h:inputSecret value="#{loginBean.password}" type="password"
+												class="form-control" id="inputPass" required="true"
+												requiredMessage="Es necesario introducir una contraseña">
+											</h:inputSecret>
+										</div>
+										<h:messages class="alert alert-danger" role="alert"></h:messages>
+										<h:commandButton class="btn btn-default" type="submit"
+											value="Sing up/in" action="#{loginBean.login}" />
+									</div>
+								</div>
+							</div>
+						</h:form>
+					</div>
+					<div class="col-md-4"></div>
+				</div>
+			</f:view>
+		</ui:define>
+	</ui:composition>
+</h:body>
+</html>

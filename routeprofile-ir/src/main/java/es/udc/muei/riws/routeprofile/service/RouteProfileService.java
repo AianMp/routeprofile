@@ -9,14 +9,16 @@ import es.udc.muei.riws.routeprofile.model.exception.IRException;
 
 public interface RouteProfileService {
 
-	public UserDTO signUp(String username, String password) throws IRException;
+    public UserDTO signUp(String username, String password);
 
-	public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException;
+    public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException;
 
-	public boolean updateUser(UserDTO updatedUser) throws IRException;
+    public UserDTO findUser(String username) throws IRException;
 
-	public Collection<RouteDTO> findRoutesById(Collection<String> routeIds) throws IRException;
+	public void updateUser(UserDTO updatedUser) throws IRException;
 
-	public Collection<RouteDTO> findRoutes(Collection<FilterDTO> filters);
+    public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException;
+
+    public Collection<RouteDTO> findRoutes(UserDTO user, Collection<FilterDTO> filters, int count) throws IRException;
 
 }
