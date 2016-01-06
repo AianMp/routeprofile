@@ -15,8 +15,6 @@ public interface IRDao {
 
     public void updateUser(UserDTO updatedUser) throws IRException;
 
-	public void updateUser(UserDTO updatedUser) throws IRException;
-
     public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException;
 
     public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException;
