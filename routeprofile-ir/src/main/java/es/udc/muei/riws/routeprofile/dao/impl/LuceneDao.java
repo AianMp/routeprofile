@@ -43,224 +43,242 @@ import es.udc.muei.riws.routeprofile.util.FieldsEnum;
 
 public class LuceneDao implements IRDao {
 
-    private static final String indexPath = ConfigurationParametersManager.getParameter("lucene.index.path");
-    private IndexReader reader = null;
-    private IndexSearcher searcher = null;
+	private static final String indexPath = ConfigurationParametersManager.getParameter("lucene.index.path");
+	private IndexReader reader = null;
+	private IndexSearcher searcher = null;
 
-    public LuceneDao() {
-	Directory dir = null;
-	try {
-	    File file = new File(indexPath);
-	    dir = FSDirectory.open(file);
-	    reader = DirectoryReader.open(dir);
-	    searcher = new IndexSearcher(reader);
-	} catch (IOException e) {
-	    System.out.println("Corrupt Index Exception" + e);
-	}
-    }
-
-    private void close() throws IOException {
-	reader.close();
-    }
-
-    @Override
-    public Collection<RouteDTO> findRoutes(UserDTO user, Collection<FilterDTO> filters, int count) throws IRException {
-	Collection<RouteDTO> result = new ArrayList<RouteDTO>();
-	try {
-	    BooleanQuery finalQuery = new BooleanQuery();
-	    QueryParser parser;
-	    for (FilterDTO filter : filters) {
-		if (filter instanceof FilterRangeDTO) {
-		    finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(),
-			    ((FilterRangeDTO) filter).getMin(), ((FilterRangeDTO) filter).getMax(), true, true),
-			    Occur.MUST);
+	public LuceneDao() {
+		Directory dir = null;
+		try {
+			File file = new File(indexPath);
+			dir = FSDirectory.open(file);
+			reader = DirectoryReader.open(dir);
+			searcher = new IndexSearcher(reader);
+		} catch (IOException e) {
+			System.out.println("Corrupt Index Exception" + e);
 		}
-		if (filter instanceof FilterValueDTO) {
-		    parser = new QueryParser(Version.LUCENE_48, filter.getField().name(),
-			    new StandardAnalyzer(Version.LUCENE_48));
-		    finalQuery.add(parser.parse(((FilterValueDTO) filter).getValue().toString()), Occur.MUST);
+	}
+
+	private void close() throws IOException {
+		reader.close();
+	}
+
+	@Override
+	public Collection<RouteDTO> findRoutes(UserDTO user, Collection<FilterDTO> filters, int count) throws IRException {
+		Collection<RouteDTO> result = new ArrayList<RouteDTO>();
+		try {
+			BooleanQuery finalQuery = new BooleanQuery();
+			QueryParser parser;
+			for (FilterDTO filter : filters) {
+				if (filter instanceof FilterRangeDTO) {
+					finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(),
+							((FilterRangeDTO) filter).getMin(), ((FilterRangeDTO) filter).getMax(), true, true),
+							Occur.MUST);
+				}
+				if (filter instanceof FilterValueDTO) {
+					parser = new QueryParser(Version.LUCENE_48, filter.getField().name(), new StandardAnalyzer(
+							Version.LUCENE_48));
+					finalQuery.add(parser.parse(((FilterValueDTO) filter).getValue().toString()), Occur.MUST);
+				}
+			}
+			TopDocs topDocs = null;
+			topDocs = searcher.search(finalQuery, count);
+
+			// TODO only for testing
+			System.out
+					.println("\n Found " + topDocs.totalHits + " results for query \"" + finalQuery.toString() + "\"");
+			printSearchDoc(count, reader, topDocs);
+
+			result = convertToRouteDTO(user, topDocs, count);
+		} catch (IOException e) {
+			throw new IRException("Error I/O", e);
+		} catch (ParseException e) {
+			throw new IRException("Error when parse the query", e);
 		}
-	    }
-	    TopDocs topDocs = null;
-	    topDocs = searcher.search(finalQuery, count);
-
-	    // TODO only for testing
-	    System.out
-		    .println("\n Found " + topDocs.totalHits + " results for query \"" + finalQuery.toString() + "\"");
-	    printSearchDoc(count, reader, topDocs);
-
-	    result = convertToRouteDTO(user, topDocs, count);
-	} catch (IOException e) {
-	    throw new IRException("Error I/O", e);
-	} catch (ParseException e) {
-	    throw new IRException("Error when parse the query", e);
+		return result;
 	}
-	return result;
-    }
 
-    @Override
-    public UserDTO createUser(UserDTO newUser) throws IRException {
+	@Override
+	public UserDTO createUser(UserDTO newUser) throws IRException {
 
-	Collection<String> usernames = new ArrayList<String>();
-	usernames.add(newUser.getUsername());
-	Collection<UserDTO> users = findUsers(usernames);
-	if (users.contains(newUser))
-	    return (newUser);
+		Collection<String> usernames = new ArrayList<String>();
+		usernames.add(newUser.getUsername());
+		Collection<UserDTO> users = findUsers(usernames);
+		if (users.contains(newUser))
+			return (newUser);
 
-	Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
-	IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
-	config.setOpenMode(OpenMode.APPEND);
-	try {
-	    IndexWriter writer = new IndexWriter(FSDirectory.open(new File(indexPath)), config);
-	    Document doc = new Document();
-	    doc.add(new StringField("username", newUser.getUsername(), Field.Store.YES));
-	    doc.add(new StringField("password", newUser.getPassword(), Field.Store.YES));
-	    doc.add(new TextField("routes", routeIdsToStr(newUser), Field.Store.YES));
-	    writer.addDocument(doc);
-	    writer.commit();
-	    writer.close();
-	    return (newUser);
-	} catch (CorruptIndexException e) {
-	    throw new IRException("Corrupt index", e);
-	} catch (IOException e) {
-	    throw new IRException("Error I/O", e);
+		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
+		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
+		config.setOpenMode(OpenMode.APPEND);
+		try {
+			IndexWriter writer = new IndexWriter(FSDirectory.open(new File(indexPath)), config);
+			Document doc = new Document();
+			doc.add(new StringField("username", newUser.getUsername(), Field.Store.YES));
+			doc.add(new StringField("password", newUser.getPassword(), Field.Store.YES));
+			doc.add(new TextField("routes", routeIdsToStr(newUser), Field.Store.YES));
+			writer.addDocument(doc);
+			writer.commit();
+			writer.close();
+			return (newUser);
+		} catch (CorruptIndexException e) {
+			throw new IRException("Corrupt index", e);
+		} catch (IOException e) {
+			throw new IRException("Error I/O", e);
+		}
 	}
-    }
 
-    @Override
-    public void updateUser(UserDTO updatedUser) throws IRException {
-	Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
-	IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
-	config.setOpenMode(OpenMode.APPEND);
-	try {
-	    IndexWriter writer = new IndexWriter(FSDirectory.open(new File(indexPath)), config);
-	    Document doc = new Document();
-	    doc.add(new StringField("username", updatedUser.getUsername(), Field.Store.YES));
-	    doc.add(new StringField("password", updatedUser.getPassword(), Field.Store.YES));
-	    doc.add(new TextField("routes", routeIdsToStr(updatedUser), Field.Store.YES));
-	    writer.updateDocument(new Term("username", updatedUser.getUsername()), doc);
-	    writer.commit();
-	    writer.close();
-	} catch (CorruptIndexException e) {
-	    throw new IRException("Corrupt index", e);
-	} catch (IOException e) {
-	    throw new IRException("Error I/O", e);
+	@Override
+	public void updateUser(UserDTO updatedUser) throws IRException {
+		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
+		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
+		config.setOpenMode(OpenMode.APPEND);
+		try {
+			IndexWriter writer = new IndexWriter(FSDirectory.open(new File(indexPath)), config);
+			Document doc = new Document();
+			doc.add(new StringField("username", updatedUser.getUsername(), Field.Store.YES));
+			doc.add(new StringField("password", updatedUser.getPassword(), Field.Store.YES));
+			doc.add(new TextField("routes", routeIdsToStr(updatedUser), Field.Store.YES));
+			writer.updateDocument(new Term("username", updatedUser.getUsername()), doc);
+			writer.commit();
+			writer.close();
+		} catch (CorruptIndexException e) {
+			throw new IRException("Corrupt index", e);
+		} catch (IOException e) {
+			throw new IRException("Error I/O", e);
+		}
 	}
-    }
 
-    @Override
-    public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException {
-	try {
-	    Collection<UserDTO> result = new ArrayList<UserDTO>();
-	    if (usernames != null && !usernames.isEmpty()) {
-		String valueQuery = "";
-		for (String username : usernames)
-		    valueQuery += (valueQuery.isEmpty() ? "" : " ") + username;
-		QueryParser parser = new QueryParser(Version.LUCENE_48, "username",
-			new StandardAnalyzer(Version.LUCENE_48));
-		Query query = parser.parse(valueQuery);
-		TopDocs topDocs = searcher.search(query, usernames.size());
-		result = convertToUserDTO(topDocs);
-	    }
-	    return (result);
-	} catch (IOException e) {
-	    throw new IRException("Error I/O", e);
-	} catch (ParseException e) {
-	    throw new IRException("Error when parse the query", e);
+	@Override
+	public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException {
+		try {
+			Collection<UserDTO> result = new ArrayList<UserDTO>();
+			if (usernames != null && !usernames.isEmpty()) {
+				String valueQuery = "";
+				for (String username : usernames)
+					valueQuery += (valueQuery.isEmpty() ? "" : " ") + username;
+				QueryParser parser = new QueryParser(Version.LUCENE_48, "username", new StandardAnalyzer(
+						Version.LUCENE_48));
+				Query query = parser.parse(valueQuery);
+				TopDocs topDocs = searcher.search(query, usernames.size());
+				result = convertToUserDTO(topDocs);
+			}
+			return (result);
+		} catch (IOException e) {
+			throw new IRException("Error I/O", e);
+		} catch (ParseException e) {
+			throw new IRException("Error when parse the query", e);
+		}
 	}
-    }
 
-    @Override
-    public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException {
+	@Override
+	public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException {
 
-	Collection<RouteDTO> result = new ArrayList<RouteDTO>();
-	try {
-	    String routeIdsQueryValue = "*";
-	    if (routeIds != null && !routeIds.isEmpty()) {
-		routeIdsQueryValue = "";
-		for (String id : routeIds)
-		    routeIdsQueryValue += (routeIdsQueryValue.isEmpty() ? "" : " ") + id;
-	    }
-	    QueryParser parser = new QueryParser(Version.LUCENE_48, FieldsEnum.url.name(),
-		    new StandardAnalyzer(Version.LUCENE_48));
-	    Query query = parser.parse(routeIdsQueryValue);
-	    TopDocs topDocs = searcher.search(query, routeIds.size());
-	    result = convertToRouteDTO(user, topDocs, topDocs.totalHits);
-	    return (result);
-	} catch (IOException e) {
-	    throw new IRException("Error I/O", e);
-	} catch (ParseException e) {
-	    throw new IRException("Error when parse the query", e);
+		Collection<RouteDTO> result = new ArrayList<RouteDTO>();
+		try {
+			if (routeIds != null && !routeIds.isEmpty()) {
+				String routeIdsQueryValue = "";
+				for (String id : routeIds)
+					routeIdsQueryValue += (routeIdsQueryValue.isEmpty() ? "" : " ") + id;
+				QueryParser parser = new QueryParser(Version.LUCENE_48, FieldsEnum.url.name(), new StandardAnalyzer(
+						Version.LUCENE_48));
+				Query query = parser.parse(routeIdsQueryValue);
+				TopDocs topDocs = searcher.search(query, routeIds.size());
+				result = convertToRouteDTO(user, topDocs, topDocs.totalHits);
+			}
+			return (result);
+		} catch (IOException e) {
+			throw new IRException("Error I/O", e);
+		} catch (ParseException e) {
+			throw new IRException("Error when parse the query", e);
+		}
 	}
-    }
 
-    private String routeIdsToStr(UserDTO user) {
-	String result = "";
-	if (user.getRouteIds() != null && !user.getRouteIds().isEmpty()) {
-	    for (String id : user.getRouteIds())
-		result += (result.isEmpty() ? "" : ",") + id;
+	@Override
+	public Collection<RouteDTO> findAllRoutes(UserDTO user, int topCount) throws IRException {
+		Collection<RouteDTO> result = new ArrayList<RouteDTO>();
+		try {
+			QueryParser parser = new QueryParser(Version.LUCENE_48, FieldsEnum.url.name(), new StandardAnalyzer(
+					Version.LUCENE_48));
+			Query query = parser.parse("http://es\\.wikiloc\\.com/wikiloc/view\\.do\\?id=");
+			TopDocs topDocs = searcher.search(query, topCount);
+			result = convertToRouteDTO(user, topDocs, topCount);
+			return (result);
+		} catch (IOException e) {
+			throw new IRException("Error I/O", e);
+		} catch (ParseException e) {
+			throw new IRException("Error when parse the query", e);
+		}
 	}
-	return (result);
-    }
 
-    private Collection<UserDTO> convertToUserDTO(TopDocs docs) throws IRException {
-	Collection<UserDTO> result = new ArrayList<UserDTO>();
-	try {
-	    for (int i = 0; i < docs.totalHits; i++) {
-		String routeIdsStr = reader.document(docs.scoreDocs[i].doc).get("routes");
-		result.add(new UserDTO(reader.document(docs.scoreDocs[i].doc).get("username"),
-			reader.document(docs.scoreDocs[i].doc).get("password"),
-			routeIdsStr != null ? Arrays.asList(routeIdsStr.split(",")) : new ArrayList<String>()));
-	    }
-	    return (result);
-	} catch (IOException e) {
-	    throw new IRException("Error when converting documents to " + UserDTO.class, e);
+	private String routeIdsToStr(UserDTO user) {
+		String result = "";
+		if (user.getRouteIds() != null && !user.getRouteIds().isEmpty()) {
+			for (String id : user.getRouteIds())
+				result += (result.isEmpty() ? "" : ",") + id;
+		}
+		return (result);
 	}
-    }
 
-    private Collection<RouteDTO> convertToRouteDTO(UserDTO user, TopDocs docs, int count) throws IRException {
-	Collection<RouteDTO> result = new ArrayList<RouteDTO>();
-	try {
-	    for (int i = 0; i < Math.min(count, docs.totalHits); i++) {
-		String id = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.url.name());
-		String distance = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_DISTANCE.name());
-		Boolean looped = Boolean.valueOf(reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LOOP.name()));
-		String maxElevation = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MAX.name());
-		String minElevation = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MIN.name());
-		String elevationGainUp = reader.document(docs.scoreDocs[i].doc)
-			.get(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name());
-		String elevationGainDown = reader.document(docs.scoreDocs[i].doc)
-			.get(FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name());
-		result.add(new RouteDTO(id, distance, looped, maxElevation, minElevation, elevationGainUp,
-			elevationGainDown, user.getRouteIds().contains(id)));
-	    }
-	    close();
-	    return (result);
-	} catch (IOException e) {
-	    throw new IRException("Error when converting documents to " + UserDTO.class, e);
+	private Collection<UserDTO> convertToUserDTO(TopDocs docs) throws IRException {
+		Collection<UserDTO> result = new ArrayList<UserDTO>();
+		try {
+			for (int i = 0; i < docs.totalHits; i++) {
+				String routeIdsStr = reader.document(docs.scoreDocs[i].doc).get("routes");
+				result.add(new UserDTO(reader.document(docs.scoreDocs[i].doc).get("username"), reader.document(
+						docs.scoreDocs[i].doc).get("password"), routeIdsStr != null ? Arrays.asList(routeIdsStr
+						.split(",")) : new ArrayList<String>()));
+			}
+			return (result);
+		} catch (IOException e) {
+			throw new IRException("Error when converting documents to " + UserDTO.class, e);
+		}
 	}
-    }
 
-    // TODO only for testing
-    private void printSearchDoc(int max, IndexReader reader, TopDocs topDocs) throws IOException {
-	for (int i = 0; i < Math.min(max, topDocs.totalHits); i++) {
-	    System.out.println(topDocs.scoreDocs[i].doc);
-	    System.out.println(" -- score: " + topDocs.scoreDocs[i].score);
-	    printDoc(reader.document(topDocs.scoreDocs[i].doc));
+	private Collection<RouteDTO> convertToRouteDTO(UserDTO user, TopDocs docs, int count) throws IRException {
+		Collection<RouteDTO> result = new ArrayList<RouteDTO>();
+		try {
+			for (int i = 0; i < Math.min(count, docs.totalHits); i++) {
+				String id = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.url.name());
+				String distance = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_DISTANCE.name());
+				Boolean looped = Boolean.valueOf(reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LOOP.name()));
+				String maxElevation = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MAX.name());
+				String minElevation = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MIN.name());
+				String elevationGainUp = reader.document(docs.scoreDocs[i].doc).get(
+						FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name());
+				String elevationGainDown = reader.document(docs.scoreDocs[i].doc).get(
+						FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name());
+				String latitude = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LATITUDE.name());
+				String longitude = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LONGITUDE.name());
+				result.add(new RouteDTO(id, distance, looped, maxElevation, minElevation, elevationGainUp,
+						elevationGainDown, user.getRouteIds().contains(id), latitude, longitude));
+			}
+			close();
+			return (result);
+		} catch (IOException e) {
+			throw new IRException("Error when converting documents to " + UserDTO.class, e);
+		}
 	}
-    }
 
-    // TODO only for testing
-    private void printDoc(Document document) {
-	System.out.println("" + FieldsEnum.PR_DISTANCE + " = " + document.get(FieldsEnum.PR_DISTANCE.name()));
-	System.out.println("" + FieldsEnum.PR_ELEVATION_GAIN_UP_HILL + " = "
-		+ document.get(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name()));
-	System.out.println("" + FieldsEnum.PR_ELEVATION_MAX + " = " + document.get(FieldsEnum.PR_ELEVATION_MAX.name()));
-	System.out.println("" + FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL + " = "
-		+ document.get(FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name()));
-	System.out.println("" + FieldsEnum.PR_ELEVATION_MIN + " = " + document.get(FieldsEnum.PR_ELEVATION_MIN.name()));
-	System.out.println("" + FieldsEnum.PR_LOOP + " = " + document.get(FieldsEnum.PR_LOOP.name()));
-	System.out.println(" ---------------------- ");
-    }
+	// TODO only for testing
+	private void printSearchDoc(int max, IndexReader reader, TopDocs topDocs) throws IOException {
+		for (int i = 0; i < Math.min(max, topDocs.totalHits); i++) {
+			System.out.println(topDocs.scoreDocs[i].doc);
+			System.out.println(" -- score: " + topDocs.scoreDocs[i].score);
+			printDoc(reader.document(topDocs.scoreDocs[i].doc));
+		}
+	}
+
+	// TODO only for testing
+	private void printDoc(Document document) {
+		System.out.println("" + FieldsEnum.PR_DISTANCE + " = " + document.get(FieldsEnum.PR_DISTANCE.name()));
+		System.out.println("" + FieldsEnum.PR_ELEVATION_GAIN_UP_HILL + " = "
+				+ document.get(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name()));
+		System.out.println("" + FieldsEnum.PR_ELEVATION_MAX + " = " + document.get(FieldsEnum.PR_ELEVATION_MAX.name()));
+		System.out.println("" + FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL + " = "
+				+ document.get(FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name()));
+		System.out.println("" + FieldsEnum.PR_ELEVATION_MIN + " = " + document.get(FieldsEnum.PR_ELEVATION_MIN.name()));
+		System.out.println("" + FieldsEnum.PR_LOOP + " = " + document.get(FieldsEnum.PR_LOOP.name()));
+		System.out.println(" ---------------------- ");
+	}
 
 }
