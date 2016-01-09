@@ -278,7 +278,7 @@ public class LuceneDao implements IRDao {
 		String routeIdsStr = reader.document(docs.scoreDocs[i].doc).get("routes");
 		result.add(new UserDTO(reader.document(docs.scoreDocs[i].doc).get("username"),
 			reader.document(docs.scoreDocs[i].doc).get("password"),
-			routeIdsStr != null ? Arrays.asList(routeIdsStr.split(",")) : new ArrayList<String>()));
+			(routeIdsStr != null && !routeIdsStr.isEmpty())  ? Arrays.asList(routeIdsStr.split(",")) : new ArrayList<String>()));
 	    }
 	    close();
 	    return (result);
