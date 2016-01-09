@@ -22,6 +22,8 @@ public interface RouteProfileService {
 
     public Collection<RouteDTO> findRoutes(UserDTO user, Collection<FilterDTO> filters, int count) throws IRException;
 
+    public Collection<RouteDTO> findAllRoutes(UserDTO user, int topCount) throws IRException;
+
     public RouteProfileDTO findRouteProfile(UserDTO user) throws IRException;
 
     Collection<RouteDTO> findRoutesRouteProfileScore(UserDTO user, Collection<FilterDTO> filters,

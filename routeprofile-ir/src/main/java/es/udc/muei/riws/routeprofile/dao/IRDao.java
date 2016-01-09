@@ -20,7 +20,8 @@ public interface IRDao {
 
     public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException;
 
-    Collection<RouteDTO> findRoutesRouteProfileScore(UserDTO user, Collection<FilterDTO> filters,
+    public Collection<RouteDTO> findRoutesRouteProfileScore(UserDTO user, Collection<FilterDTO> filters,
 	    RouteProfileDTO routeProfile, int count) throws IRException;
 
+    public Collection<RouteDTO> findAllRoutes(UserDTO user, int topCount) throws IRException;
 }

@@ -245,6 +245,23 @@ public class LuceneDao implements IRDao {
 	}
     }
 
+    @Override
+    public Collection<RouteDTO> findAllRoutes(UserDTO user, int topCount) throws IRException {
+	Collection<RouteDTO> result = new ArrayList<RouteDTO>();
+	try {
+	    QueryParser parser = new QueryParser(Version.LUCENE_48, FieldsEnum.url.name(),
+		    new StandardAnalyzer(Version.LUCENE_48));
+	    Query query = parser.parse("http://es\\.wikiloc\\.com/wikiloc/view\\.do\\?id=");
+	    TopDocs topDocs = searcher.search(query, topCount);
+	    result = convertToRouteDTO(user, topDocs, topCount);
+	    return (result);
+	} catch (IOException e) {
+	    throw new IRException("Error I/O", e);
+	} catch (ParseException e) {
+	    throw new IRException("Error when parse the query", e);
+	}
+    }
+
     private String routeIdsToStr(UserDTO user) {
 	String result = "";
 	if (user.getRouteIds() != null && !user.getRouteIds().isEmpty()) {
@@ -286,8 +303,11 @@ public class LuceneDao implements IRDao {
 			reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name()));
 		Double elevationGainDown = Double.valueOf(
 			reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name()));
+		String latitude = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LATITUDE.name());
+		String longitude = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LONGITUDE.name());
+
 		result.add(new RouteDTO(id, distance, looped, maxElevation, minElevation, elevationGainUp,
-			elevationGainDown, user.getRouteIds().contains(id)));
+			elevationGainDown, user.getRouteIds().contains(id), latitude, longitude));
 	    }
 	    close();
 	    return (result);

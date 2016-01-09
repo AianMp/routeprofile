@@ -15,9 +15,11 @@ public class RouteDTO implements Serializable {
     private Double elevationGainDown = null;
     private Boolean done = null;
     private RouteProfileDTO routeProfile;
+    private String latitude = null;
+    private String longitude = null;
 
     public RouteDTO(String id, Double distance, Boolean looped, Double maxElevation, Double minElevation,
-	    Double elevationGainUp, Double elevationGainDown, boolean done) {
+	    Double elevationGainUp, Double elevationGainDown, boolean done, String latitude, String longitude) {
 	this.id = id;
 	this.distance = distance;
 	this.looped = looped;
@@ -27,6 +29,8 @@ public class RouteDTO implements Serializable {
 	this.elevationGainDown = elevationGainDown;
 	this.done = done;
 	this.routeProfile = new RouteProfileDTO(this);
+	this.latitude = latitude;
+	this.longitude = longitude;
     }
 
     public String getId() {
@@ -130,7 +134,7 @@ public class RouteDTO implements Serializable {
     public String toString() {
 	return "RouteDTO [id=" + id + ", distance=" + distance + ", looped=" + looped + ", maxElevation=" + maxElevation
 		+ ", minElevation=" + minElevation + ", elevationGainUp=" + elevationGainUp + ", elevationGainDown="
-		+ elevationGainDown + ", done=" + done + "]";
+		+ elevationGainDown + ", done=" + done + ", latitude=" + latitude + ", longitude=" + longitude + "]";
     }
 
 }

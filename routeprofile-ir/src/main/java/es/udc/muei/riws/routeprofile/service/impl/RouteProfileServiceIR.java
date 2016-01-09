@@ -68,6 +68,12 @@ public class RouteProfileServiceIR implements RouteProfileService {
     }
 
     @Override
+    public Collection<RouteDTO> findAllRoutes(UserDTO user, int topCount) throws IRException {
+	IRDao dao = IRDaoFactory.createInstance();
+	return (dao.findAllRoutes(user, topCount));
+    }
+
+    @Override
     public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException {
 	IRDao dao = IRDaoFactory.createInstance();
 	return dao.findRoutesById(user, routeIds);
