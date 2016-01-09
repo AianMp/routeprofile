@@ -7,16 +7,17 @@ public class RouteDTO implements Serializable {
     private static final long serialVersionUID = -4281986308299917975L;
 
     private String id = null;
-    private String distance = null;
+    private Double distance = null;
     private Boolean looped = null;
-    private String maxElevation = null;
-    private String minElevation = null;
-    private String elevationGainUp = null;
-    private String elevationGainDown = null;
+    private Double maxElevation = null;
+    private Double minElevation = null;
+    private Double elevationGainUp = null;
+    private Double elevationGainDown = null;
     private Boolean done = null;
+    private RouteProfileDTO routeProfile;
 
-    public RouteDTO(String id, String distance, Boolean looped, String maxElevation, String minElevation,
-	    String elevationGainUp, String elevationGainDown, boolean done) {
+    public RouteDTO(String id, Double distance, Boolean looped, Double maxElevation, Double minElevation,
+	    Double elevationGainUp, Double elevationGainDown, boolean done) {
 	this.id = id;
 	this.distance = distance;
 	this.looped = looped;
@@ -25,6 +26,7 @@ public class RouteDTO implements Serializable {
 	this.elevationGainUp = elevationGainUp;
 	this.elevationGainDown = elevationGainDown;
 	this.done = done;
+	this.routeProfile = new RouteProfileDTO(this);
     }
 
     public String getId() {
@@ -35,11 +37,11 @@ public class RouteDTO implements Serializable {
 	this.id = id;
     }
 
-    public String getDistance() {
+    public Double getDistance() {
 	return distance;
     }
 
-    public void setDistance(String distance) {
+    public void setDistance(Double distance) {
 	this.distance = distance;
     }
 
@@ -51,35 +53,35 @@ public class RouteDTO implements Serializable {
 	this.looped = looped;
     }
 
-    public String getMaxElevation() {
+    public Double getMaxElevation() {
 	return maxElevation;
     }
 
-    public void setMaxElevation(String maxElevation) {
+    public void setMaxElevation(Double maxElevation) {
 	this.maxElevation = maxElevation;
     }
 
-    public String getMinElevation() {
+    public Double getMinElevation() {
 	return minElevation;
     }
 
-    public void setMinElevation(String minElevation) {
+    public void setMinElevation(Double minElevation) {
 	this.minElevation = minElevation;
     }
 
-    public String getElevationGainUp() {
+    public Double getElevationGainUp() {
 	return elevationGainUp;
     }
 
-    public void setElevationGainUp(String elevationGainUp) {
+    public void setElevationGainUp(Double elevationGainUp) {
 	this.elevationGainUp = elevationGainUp;
     }
 
-    public String getElevationGainDown() {
+    public Double getElevationGainDown() {
 	return elevationGainDown;
     }
 
-    public void setElevationGainDown(String elevationGainDown) {
+    public void setElevationGainDown(Double elevationGainDown) {
 	this.elevationGainDown = elevationGainDown;
     }
 
@@ -89,6 +91,14 @@ public class RouteDTO implements Serializable {
 
     public void setDone(Boolean done) {
 	this.done = done;
+    }
+
+    public RouteProfileDTO getRouteProfile() {
+	return routeProfile;
+    }
+
+    public void setRouteProfile(RouteProfileDTO routeProfile) {
+	this.routeProfile = routeProfile;
     }
 
     @Override

@@ -8,28 +8,28 @@
 	<ui:composition template="/layout/template.xhtml">
 		<ui:define name="content">
 			<f:view>
-				<div class="bs-docs-section">
-					<div class="row">
-						<div class="page-header">
-							<h1>Búsqueda por filtros</h1>
-						</div>
+				<h:form id="formSearch">
+					<div class="bs-docs-section">
 						<div class="row">
-							<div class="col-sm-12">
-								<div class="panel panel-default">
-									<div class="panel-heading">
-										<h3 class="panel-title">Añadir filtros</h3>
-									</div>
+							<div class="page-header">
+								<h1>Búsqueda por filtros</h1>
+							</div>
+							<div class="row">
+								<div class="col-sm-12">
+									<div class="panel panel-default">
+										<div class="panel-heading">
+											<h3 class="panel-title">Añadir filtros</h3>
+										</div>
+										<div class="panel-body">
+											<div class="row">
+												<div class="col-md-6">
 
-									<div class="panel-body">
-										<div class="row">
-											<div class="col-md-6">
-												<h:form>
 													<div class="panel panel-default">
 														<div class="panel-body">
 															<div class="row">
 																<div class="col-md-4 form-group">
 																	<label>Campo</label>
-																	<h:selectOneMenu class="form-control input-sm"
+																	<h:selectOneMenu id="fieldRange" class="form-control input-sm"
 																		value="#{searchFilterBean.field}">
 																		<f:selectItem itemLabel=" Selecciona " />
 																		<f:selectItems value="#{searchFilterBean.itemsField}" />
@@ -37,12 +37,12 @@
 																</div>
 																<div class="col-md-4 form-group">
 																	<label>Mínimo</label>
-																	<h:inputText value="#{searchFilterBean.min}"
+																	<h:inputText id="min" value="#{searchFilterBean.min}"
 																		type="text" class="form-control input-sm" />
 																</div>
 																<div class="col-md-4 form-group">
 																	<label>Máximo</label>
-																	<h:inputText value="#{searchFilterBean.max}"
+																	<h:inputText id="max" value="#{searchFilterBean.max}"
 																		type="text" class="form-control input-sm" />
 																</div>
 															</div>
@@ -53,134 +53,213 @@
 																			class="btn btn-outline btn-default"
 																			action="#{searchFilterBean.addFilterRange}">
 																			<span class="fa fa-search "> Añadir filtro</span>
-																			<f:ajax execute="@form" render="filters routes" />
+																			<f:ajax execute="@this fieldRange min max"
+																				render="formFilter filters routes" />
 																		</h:commandLink>
 																	</div>
 																</div>
 															</div>
 														</div>
 													</div>
-												</h:form>
+
+												</div>
+												<div class="col-md-6">
+														<div class="panel panel-default">
+															<div class="panel-body">
+																<div class="row">
+																	<div class="col-md-4 form-group">
+																		<label>Campo</label>
+																		<h:selectOneMenu id="fieldValue" class="form-control input-sm"
+																			value="#{searchFilterBean.field}">
+																			<f:selectItem itemLabel=" Selecciona " />
+																			<f:selectItems value="#{searchFilterBean.itemsField}" />
+																		</h:selectOneMenu>
+																	</div>
+																	<div class="col-md-4 form-group">
+																		<label>Valor</label>
+																		<h:inputText id="value" value="#{searchFilterBean.value}"
+																			type="text" class="form-control input-sm" />
+																	</div>
+																</div>
+																<div class="row">
+																	<div class="col-md-4">
+																		<div class="pull-left">
+																			<h:commandLink type="button"
+																				class="btn btn-outline btn-default"
+																				action="#{searchFilterBean.addFilterValue}">
+																				<span class="fa fa-search "> Añadir filtro</span>
+																				<f:ajax execute="@this fieldValue value" render="filters routes" />
+																			</h:commandLink>
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>
+												</div>
 											</div>
-											<div class="col-md-6">
-												<h:form>
-													<div class="panel panel-default">
-														<div class="panel-body">
-															<div class="row">
-																<div class="col-md-4 form-group">
-																	<label>Campo</label>
-																	<h:selectOneMenu class="form-control input-sm"
-																		value="#{searchFilterBean.field}">
-																		<f:selectItem itemLabel=" Selecciona " />
-																		<f:selectItems value="#{searchFilterBean.itemsField}" />
-																	</h:selectOneMenu>
+											<div class="row">
+												<h:panelGroup id="filters">
+													<ui:repeat var="filter" value="#{searchFilterBean.filters}">
+														<div class="col-sm-2">
+															<div class="panel panel-default">
+																<div class="panel-heading">
+																	<h3 class="panel-title">#{filter.field}</h3>
 																</div>
-																<div class="col-md-4 form-group">
-																	<label>Valor</label>
-																	<h:inputText value="#{searchFilterBean.value}"
-																		type="text" class="form-control input-sm" />
-																</div>
-															</div>
-															<div class="row">
-																<div class="col-md-4">
-																	<div class="pull-left">
-																		<h:commandLink type="button"
-																			class="btn btn-outline btn-default"
-																			action="#{searchFilterBean.addFilterValue}">
-																			<span class="fa fa-search "> Añadir filtro</span>
-																			<f:ajax execute="@form" render="filters routes" />
-																		</h:commandLink>
+																<h:panelGroup
+																	rendered="#{not (filter.field == 'PR_LOOP' || filter.field == 'url')}">
+																	<div class="panel-body">
+																		<label>Máximo</label> <span class="badge">#{filter.max}</span>
+																		<label>Mínimo</label> <span class="badge">#{filter.min}</span>
 																	</div>
-																</div>
+																</h:panelGroup>
+																<h:panelGroup
+																	rendered="#{filter.field == 'PR_LOOP' || filter.field == 'url'}">
+																	<div class="panel-body">
+																		<label>Valor</label> <span class="badge">#{filter.value}</span>
+																	</div>
+																</h:panelGroup>
 															</div>
 														</div>
-													</div>
-												</h:form>
+														<!-- /.col-sm-4 -->
+													</ui:repeat>
+												</h:panelGroup>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
+
 						</div>
 						<div class="row">
-							<h:panelGroup id="filters">
-								<ui:repeat var="filter" value="#{searchFilterBean.filters}">
-									<div class="col-sm-4">
-										<div class="panel panel-default">
-											<div class="panel-heading">
-												<h3 class="panel-title">#{filter.field}</h3>
-											</div>
-											<h:panelGroup
-												rendered="#{not (filter.field == 'PR_LOOP' || filter.field == 'url')}">
-												<div class="panel-body">
-													<h5>
-														Máximo <span class="label label-default">#{filter.max}</span>
-													</h5>
-													<h5>
-														Mínimo <span class="label label-default">#{filter.min}</span>
-													</h5>
-												</div>
-											</h:panelGroup>
-											<h:panelGroup
-												rendered="#{filter.field == 'PR_LOOP' || filter.field == 'url'}">
-												<div class="panel-body">
-													<h5>
-														Valor <span class="label label-default">#{filter.value}</span>
-													</h5>
-												</div>
-											</h:panelGroup>
-										</div>
-									</div>
-									<!-- /.col-sm-4 -->
-								</ui:repeat>
-							</h:panelGroup>
-						</div>
-					</div>
-					<div class="row">
-						<div class="page-header">
-							<h1>Rutas</h1>
-						</div>
-						<div class="row">
-							<h:panelGroup id="routes">
-								<ui:repeat var="route" value="#{searchFilterBean.routes}">
+							<div class="page-header">
+								<h1>Perfil de Ruta</h1>
+							</div>
+							<div class="row">
+								<h:panelGroup id="routeProfile">
 									<div class="col-sm-12">
 										<div class="panel panel-default">
 											<div class="panel-heading">
-												<h3 class="panel-title">#{route.id}</h3>
+												<h3 class="panel-title">Perfil de ruta</h3>
 											</div>
-
 											<div class="panel-body">
-												<h5>
-													Distancia <span class="label label-default">#{route.distance}</span>
-												</h5>
-												<h5>
-													Desnivel acumulado subiendo <span
-														class="label label-default">#{route.elevationGainUp}</span>
-												</h5>
-												<h5>
-													Altitud máxima <span class="label label-default">#{route.maxElevation}</span>
-												</h5>
-												<h5>
-													Desnivel acumulado bajando <span
-														class="label label-default">#{route.elevationGainDown}</span>
-												</h5>
-												<h5>
-													Altitud mínima <span class="label label-default">#{route.minElevation}</span>
-												</h5>
-												<h5>
-													Circular <span class="label label-default">#{route.looped}</span>
-												</h5>
-											</div>
+												<div class="col-md-4">
+												<div class="row">
+														<label>Ratio total </label> <span class="badge">#{searchFilterBean.routeProfile.ratio}</span>
+													</div>
+													<div class="row">
+														<label>Nº de rutas </label> <span class="badge">#{searchFilterBean.routeProfile.numDone}</span>
+													</div>
+													<div class="row">
+														<label>Distancia media </label> <span class="badge">
+															<h:outputText
+																value="#{searchFilterBean.routeProfile.distance}">
+																<f:convertNumber pattern="#0.00" />
+															</h:outputText> km
+														</span>
+													</div>
+												</div>
+												<div class="col-md-4">
+													<div class="row">
+														<label>Altitud max - min </label> <span class="badge"><h:outputText
+																value="#{searchFilterBean.routeProfile.ratioElevation}">
+																<f:convertNumber pattern="#,##,##0.00" />
+															</h:outputText> m</span>
+													</div>
+												</div>
+												<div class="col-md-4">
+													<div class="row">
+														<label>Desnivel acumulado subiendo / Distancia </label> <span
+															class="badge"><h:outputText
+																value="#{searchFilterBean.routeProfile.ratioGainUp}">
+																<f:convertNumber pattern="#,##,##0.00" />
+															</h:outputText>m/km</span>
+													</div>
+													<div class="row">
+														<label>Desnivel acumulado bajando / Distancia </label> <span
+															class="badge"><h:outputText
+																value="#{searchFilterBean.routeProfile.ratioGainDown}">
+																<f:convertNumber pattern="#,##,##0.00" />
+															</h:outputText>m/km</span>
+													</div>
 
+												</div>
+											</div>
 										</div>
 									</div>
 									<!-- /.col-sm-4 -->
-								</ui:repeat>
-							</h:panelGroup>
+								</h:panelGroup>
+							</div>
+						</div>
+
+
+						<div class="row">
+							<div class="page-header">
+								<h1>Rutas</h1>
+							</div>
+							<div class="row">
+								<h:panelGroup id="routes">
+
+									<ui:repeat var="route" value="#{searchFilterBean.routes}">
+										<div class="col-sm-12">
+											<div class="panel panel-default">
+												<div class="panel-heading">
+													<h3 class="panel-title">
+														(#{route.routeProfile.ratio}) #{route.id}
+														<h:panelGroup rendered="#{not route.done}">
+															<div class="pull-right">
+																<h:commandLink type="button"
+																	class="btn btn-success btn-xs">
+																	<span class="glyphicon glyphicon-plus"> Done</span>
+																	<f:ajax execute="@this"
+																		listener="#{searchFilterBean.doneRoute(route.id)}"
+																		render="formSearch" />
+																</h:commandLink>
+															</div>
+														</h:panelGroup>
+													</h3>
+												</div>
+												<div class="panel-body">
+													<div class="col-md-3">
+														<div class="row">
+															<label>Distancia </label> <span class="badge">#{route.distance}
+																km</span>
+														</div>
+														<div class="row">
+															<label>Circular </label> <span class="badge">#{route.looped}</span>
+														</div>
+													</div>
+													<div class="col-md-3">
+														<div class="row">
+															<label>Altitud máxima </label> <span class="badge">#{route.maxElevation}
+																m</span>
+														</div>
+														<div class="row">
+															<label>Altitud mínima </label> <span class="badge">#{route.minElevation}
+																m</span>
+														</div>
+													</div>
+													<div class="col-md-3">
+														<div class="row">
+															<label>Desnivel acumulado subiendo </label> <span
+																class="badge">#{route.elevationGainUp} m</span>
+														</div>
+														<div class="row">
+															<label>Desnivel acumulado bajando </label> <span
+																class="badge">#{route.elevationGainDown} m</span>
+														</div>
+
+													</div>
+												</div>
+											</div>
+										</div>
+										<!-- /.col-sm-4 -->
+									</ui:repeat>
+
+								</h:panelGroup>
+							</div>
 						</div>
 					</div>
-				</div>
-
+				</h:form>
 			</f:view>
 		</ui:define>
 	</ui:composition>

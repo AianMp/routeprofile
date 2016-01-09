@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import es.udc.muei.riws.routeprofile.model.dto.FilterDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
+import es.udc.muei.riws.routeprofile.model.dto.RouteProfileDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
 import es.udc.muei.riws.routeprofile.model.exception.IRException;
 
@@ -18,4 +19,8 @@ public interface IRDao {
     public Collection<UserDTO> findUsers(Collection<String> usernames) throws IRException;
 
     public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException;
+
+    Collection<RouteDTO> findRoutesRouteProfileScore(UserDTO user, Collection<FilterDTO> filters,
+	    RouteProfileDTO routeProfile, int count) throws IRException;
+
 }

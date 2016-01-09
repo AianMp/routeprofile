@@ -19,6 +19,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.CustomScoreQuery;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -32,10 +33,12 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
 import es.udc.muei.riws.routeprofile.dao.IRDao;
+import es.udc.muei.riws.routeprofile.dao.util.RouteProfileScore;
 import es.udc.muei.riws.routeprofile.model.dto.FilterDTO;
 import es.udc.muei.riws.routeprofile.model.dto.FilterRangeDTO;
 import es.udc.muei.riws.routeprofile.model.dto.FilterValueDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
+import es.udc.muei.riws.routeprofile.model.dto.RouteProfileDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
 import es.udc.muei.riws.routeprofile.model.exception.IRException;
 import es.udc.muei.riws.routeprofile.util.ConfigurationParametersManager;
@@ -72,8 +75,8 @@ public class LuceneDao implements IRDao {
 	    for (FilterDTO filter : filters) {
 		if (filter instanceof FilterRangeDTO) {
 		    finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(),
-			    ((FilterRangeDTO) filter).getMin(), ((FilterRangeDTO) filter).getMax(), true, true),
-			    Occur.MUST);
+			    ((FilterRangeDTO) filter).getMin().toString(),
+			    ((FilterRangeDTO) filter).getMax().toString(), true, true), Occur.MUST);
 		}
 		if (filter instanceof FilterValueDTO) {
 		    parser = new QueryParser(Version.LUCENE_48, filter.getField().name(),
@@ -85,9 +88,48 @@ public class LuceneDao implements IRDao {
 	    topDocs = searcher.search(finalQuery, count);
 
 	    // TODO only for testing
-	    System.out
-		    .println("\n Found " + topDocs.totalHits + " results for query \"" + finalQuery.toString() + "\"");
-	    printSearchDoc(count, reader, topDocs);
+	    // System.out
+	    // .println("\n Found " + topDocs.totalHits + " results for query
+	    // \"" + finalQuery.toString() + "\"");
+	    // printSearchDoc(count, reader, topDocs);
+
+	    result = convertToRouteDTO(user, topDocs, count);
+	} catch (IOException e) {
+	    throw new IRException("Error I/O", e);
+	} catch (ParseException e) {
+	    throw new IRException("Error when parse the query", e);
+	}
+	return result;
+    }
+
+    @Override
+    public Collection<RouteDTO> findRoutesRouteProfileScore(UserDTO user, Collection<FilterDTO> filters,
+	    RouteProfileDTO routeProfile, int count) throws IRException {
+	Collection<RouteDTO> result = new ArrayList<RouteDTO>();
+	try {
+	    BooleanQuery finalQuery = new BooleanQuery();
+	    QueryParser parser;
+	    for (FilterDTO filter : filters) {
+		if (filter instanceof FilterRangeDTO) {
+		    finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(),
+			    ((FilterRangeDTO) filter).getMin().toString(),
+			    ((FilterRangeDTO) filter).getMax().toString(), true, true), Occur.MUST);
+		}
+		if (filter instanceof FilterValueDTO) {
+		    parser = new QueryParser(Version.LUCENE_48, filter.getField().name(),
+			    new StandardAnalyzer(Version.LUCENE_48));
+		    finalQuery.add(parser.parse(((FilterValueDTO) filter).getValue().toString()), Occur.MUST);
+		}
+	    }
+	    TopDocs topDocs = null;
+	    CustomScoreQuery scoreQuery = new RouteProfileScore(finalQuery, routeProfile);
+	    topDocs = searcher.search(scoreQuery, count);
+
+	    // TODO only for testing
+	    // System.out
+	    // .println("\n Found " + topDocs.totalHits + " results for query
+	    // \"" + scoreQuery.toString() + "\"");
+	    // printSearchDoc(count, reader, topDocs);
 
 	    result = convertToRouteDTO(user, topDocs, count);
 	} catch (IOException e) {
@@ -100,13 +142,11 @@ public class LuceneDao implements IRDao {
 
     @Override
     public UserDTO createUser(UserDTO newUser) throws IRException {
-
 	Collection<String> usernames = new ArrayList<String>();
 	usernames.add(newUser.getUsername());
 	Collection<UserDTO> users = findUsers(usernames);
 	if (users.contains(newUser))
 	    return (newUser);
-
 	Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
 	IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
 	config.setOpenMode(OpenMode.APPEND);
@@ -119,6 +159,7 @@ public class LuceneDao implements IRDao {
 	    writer.addDocument(doc);
 	    writer.commit();
 	    writer.close();
+	    close();
 	    return (newUser);
 	} catch (CorruptIndexException e) {
 	    throw new IRException("Corrupt index", e);
@@ -141,6 +182,7 @@ public class LuceneDao implements IRDao {
 	    writer.updateDocument(new Term("username", updatedUser.getUsername()), doc);
 	    writer.commit();
 	    writer.close();
+	    close();
 	} catch (CorruptIndexException e) {
 	    throw new IRException("Corrupt index", e);
 	} catch (IOException e) {
@@ -160,6 +202,10 @@ public class LuceneDao implements IRDao {
 			new StandardAnalyzer(Version.LUCENE_48));
 		Query query = parser.parse(valueQuery);
 		TopDocs topDocs = searcher.search(query, usernames.size());
+		// TODO only for testing
+		// System.out.println("\n Found " + topDocs.totalHits + "
+		// results for query \"" + query.toString() + "\"");
+		// printSearchDoc(topDocs.totalHits, reader, topDocs);
 		result = convertToUserDTO(topDocs);
 	    }
 	    return (result);
@@ -174,17 +220,22 @@ public class LuceneDao implements IRDao {
     public Collection<RouteDTO> findRoutesById(UserDTO user, Collection<String> routeIds) throws IRException {
 
 	Collection<RouteDTO> result = new ArrayList<RouteDTO>();
+	if (routeIds == null || routeIds.isEmpty())
+	    return result;
 	try {
-	    String routeIdsQueryValue = "*";
-	    if (routeIds != null && !routeIds.isEmpty()) {
-		routeIdsQueryValue = "";
-		for (String id : routeIds)
-		    routeIdsQueryValue += (routeIdsQueryValue.isEmpty() ? "" : " ") + id;
+	    String routeIdsQueryValue = "";
+	    for (String id : routeIds) {
+		routeIdsQueryValue += (routeIdsQueryValue.isEmpty() ? "" : " ")
+			+ id.replace("http://es.wikiloc.com/wikiloc/view.do?id=", "");
 	    }
 	    QueryParser parser = new QueryParser(Version.LUCENE_48, FieldsEnum.url.name(),
 		    new StandardAnalyzer(Version.LUCENE_48));
 	    Query query = parser.parse(routeIdsQueryValue);
 	    TopDocs topDocs = searcher.search(query, routeIds.size());
+	    // TODO only for testing
+	    // System.out.println("\n Found " + topDocs.totalHits + " results
+	    // for query \"" + query.toString() + "\"");
+	    // printSearchDoc(routeIds.size(), reader, topDocs);
 	    result = convertToRouteDTO(user, topDocs, topDocs.totalHits);
 	    return (result);
 	} catch (IOException e) {
@@ -212,6 +263,7 @@ public class LuceneDao implements IRDao {
 			reader.document(docs.scoreDocs[i].doc).get("password"),
 			routeIdsStr != null ? Arrays.asList(routeIdsStr.split(",")) : new ArrayList<String>()));
 	    }
+	    close();
 	    return (result);
 	} catch (IOException e) {
 	    throw new IRException("Error when converting documents to " + UserDTO.class, e);
@@ -223,14 +275,17 @@ public class LuceneDao implements IRDao {
 	try {
 	    for (int i = 0; i < Math.min(count, docs.totalHits); i++) {
 		String id = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.url.name());
-		String distance = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_DISTANCE.name());
+		Double distance = Double
+			.valueOf(reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_DISTANCE.name()));
 		Boolean looped = Boolean.valueOf(reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LOOP.name()));
-		String maxElevation = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MAX.name());
-		String minElevation = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MIN.name());
-		String elevationGainUp = reader.document(docs.scoreDocs[i].doc)
-			.get(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name());
-		String elevationGainDown = reader.document(docs.scoreDocs[i].doc)
-			.get(FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name());
+		Double maxElevation = Double
+			.valueOf(reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MAX.name()));
+		Double minElevation = Double
+			.valueOf(reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_MIN.name()));
+		Double elevationGainUp = Double.valueOf(
+			reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name()));
+		Double elevationGainDown = Double.valueOf(
+			reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name()));
 		result.add(new RouteDTO(id, distance, looped, maxElevation, minElevation, elevationGainUp,
 			elevationGainDown, user.getRouteIds().contains(id)));
 	    }
@@ -252,6 +307,7 @@ public class LuceneDao implements IRDao {
 
     // TODO only for testing
     private void printDoc(Document document) {
+	System.out.println("" + FieldsEnum.url + " = " + document.get(FieldsEnum.url.name()));
 	System.out.println("" + FieldsEnum.PR_DISTANCE + " = " + document.get(FieldsEnum.PR_DISTANCE.name()));
 	System.out.println("" + FieldsEnum.PR_ELEVATION_GAIN_UP_HILL + " = "
 		+ document.get(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.name()));

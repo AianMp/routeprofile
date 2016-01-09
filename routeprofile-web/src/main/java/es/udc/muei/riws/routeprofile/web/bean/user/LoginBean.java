@@ -66,4 +66,8 @@ public class LoginBean extends BaseBean {
 	this.password = password;
     }
 
+    public static long getSerialversionuid() {
+	return serialVersionUID;
+    }
+
 }

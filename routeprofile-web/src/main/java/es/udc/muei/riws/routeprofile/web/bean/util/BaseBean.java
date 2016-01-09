@@ -41,4 +41,9 @@ public class BaseBean implements Serializable {
 	FacesMessage facesMessage = new FacesMessage(menssage);
 	FacesContext.getCurrentInstance().addMessage(null, facesMessage);
     }
+
+    public static long getSerialversionuid() {
+	return serialVersionUID;
+    }
+
 }
