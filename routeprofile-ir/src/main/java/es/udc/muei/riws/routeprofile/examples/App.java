@@ -3,6 +3,7 @@ package es.udc.muei.riws.routeprofile.examples;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import es.udc.muei.riws.routeprofile.model.dto.LocationDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
 import es.udc.muei.riws.routeprofile.model.exception.IRException;
@@ -28,6 +29,7 @@ public class App {
 				if (user.getUsername().equals("jcascas1"))
 					updatedUser = user;
 			}
+			LocationDTO location = new LocationDTO(43.34465, -8.39730);
 			// Collection<String> routeIds = new ArrayList<String>();
 			// routeIds.add("4376248");
 			// routeIds.add("7294921");
@@ -40,7 +42,14 @@ public class App {
 			// Collection<RouteDTO> userRoutes = rps.findRoutesById(updatedUser,
 			// updatedUser.getRouteIds());
 			// System.out.println("Routes done by user: " + userRoutes);
-			Collection<RouteDTO> routes = rps.findAllRoutes(updatedUser, 10);
+			Collection<RouteDTO> routes = rps.findAllRoutes(updatedUser, 30);
+			// Collection<FilterDTO> filters = new ArrayList<FilterDTO>();
+			// FilterDTO fDistance = new FilterRangeDTO(FieldsEnum.PR_DISTANCE,
+			// 22., 90.);
+			// filters.add(fDistance);
+			// Collection<RouteDTO> routes =
+			// rps.findRoutesByLocationScore(updatedUser, filters, location,
+			// 10);
 			System.out.println(routes);
 
 		} catch (IRException e) {

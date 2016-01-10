@@ -11,6 +11,7 @@ import javax.faces.context.FacesContext;
 import es.udc.muei.riws.routeprofile.model.dto.FilterDTO;
 import es.udc.muei.riws.routeprofile.model.dto.FilterRangeDTO;
 import es.udc.muei.riws.routeprofile.model.dto.FilterValueDTO;
+import es.udc.muei.riws.routeprofile.model.dto.LocationDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteProfileDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
@@ -38,14 +39,15 @@ public class SearchFilterBean extends BaseBean {
 	private Double max;
 	private Double min;
 	private String value;
+	private LocationDTO location = null;
 
 	@PostConstruct
 	public void init() {
-		field = FieldsEnum.PR_DISTANCE;
-		min = (double) 20;
-		max = (double) 90;
-		addFilterRange();
-		// loadList();
+		// field = FieldsEnum.PR_DISTANCE;
+		// min = (double) 20;
+		// max = (double) 90;
+		// addFilterRange();
+		loadList();
 	}
 
 	private void loadList() {
@@ -54,16 +56,12 @@ public class SearchFilterBean extends BaseBean {
 			max = null;
 			min = null;
 			value = null;
-			routeProfile = super.getRouteProfileService().findRouteProfile(
-					super.getSessionBean().getUser());
+			routeProfile = super.getRouteProfileService().findRouteProfile(super.getSessionBean().getUser());
 			if (routeProfile.getNumDone() == 0)
-				routes = super.getRouteProfileService().findRoutes(
-						this.sessionBean.getUser(), filters, COUNT);
+				routes = super.getRouteProfileService().findAllRoutes(this.sessionBean.getUser(), COUNT);
 			else
-				routes = super.getRouteProfileService()
-						.findRoutesRouteProfileScore(
-								this.sessionBean.getUser(), filters,
-								routeProfile, COUNT);
+				routes = super.getRouteProfileService().findRoutesRouteProfileScore(this.sessionBean.getUser(),
+						filters, routeProfile, COUNT);
 			System.out.println("Load " + routes.size() + " routes");
 		} catch (IRException e) {
 			super.print("No se ha podido realizar la búsqueda, comprueba los filtros y/o recargue la página");
@@ -88,8 +86,7 @@ public class SearchFilterBean extends BaseBean {
 		try {
 			UserDTO user = super.getSessionBean().getUser();
 			user.addRoute(id);
-			super.getSessionBean().setUser(
-					super.getRouteProfileService().updateUser(user));
+			super.getSessionBean().setUser(super.getRouteProfileService().updateUser(user));
 			loadList();
 		} catch (IRException e) {
 			super.print("No se ha podido añadir la ruta");
@@ -170,12 +167,11 @@ public class SearchFilterBean extends BaseBean {
 	}
 
 	public void saveLocation() {
-		String latitude = FacesContext.getCurrentInstance()
-				.getExternalContext().getRequestParameterMap().get("latitude");
-		String longitude = FacesContext.getCurrentInstance()
-				.getExternalContext().getRequestParameterMap().get("longitude");
-		System.out.println("Latitud = " + latitude);
-		System.out.println("Longitude = " + longitude);
+		double latitude = Double.parseDouble(FacesContext.getCurrentInstance().getExternalContext()
+				.getRequestParameterMap().get("latitude"));
+		double longitude = Double.parseDouble(FacesContext.getCurrentInstance().getExternalContext()
+				.getRequestParameterMap().get("longitude"));
+		this.location = new LocationDTO(latitude, longitude);
 	}
 
 }

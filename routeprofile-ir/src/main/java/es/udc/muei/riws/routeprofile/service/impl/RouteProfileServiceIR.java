@@ -9,6 +9,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import es.udc.muei.riws.routeprofile.dao.IRDao;
 import es.udc.muei.riws.routeprofile.dao.IRDaoFactory;
 import es.udc.muei.riws.routeprofile.model.dto.FilterDTO;
+import es.udc.muei.riws.routeprofile.model.dto.LocationDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteProfileDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
@@ -33,6 +34,14 @@ public class RouteProfileServiceIR implements RouteProfileService {
 	return dao.findRoutesRouteProfileScore(user, filters, routeProfile, count);
     }
 
+	@Override
+	public Collection<RouteDTO> findRoutesByLocationScore(UserDTO user, Collection<FilterDTO> filters,
+			LocationDTO location, int count) throws IRException {
+		IRDao dao = IRDaoFactory.createInstance();
+		return (dao.findRoutesByLocationScore(user, filters, location, count));
+	}
+   
+    
     @Override
     public UserDTO signUp(String username, String password) {
 	IRDao dao = IRDaoFactory.createInstance();
@@ -90,7 +99,7 @@ public class RouteProfileServiceIR implements RouteProfileService {
 	sumRouteDone.avg();
 	return sumRouteDone;
     }
-
+ 
     public static void main(String[] args) throws IOException, ParseException {
 	// System.out.println("TEST RouteProfileServiceIR ");
 	// System.out.println("499".compareTo("2.411") + " | " +
