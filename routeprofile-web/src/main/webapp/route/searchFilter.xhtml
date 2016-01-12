@@ -216,7 +216,7 @@
 									<label>Número resultados</label>
 									<h:selectOneMenu id="scoreType" class="form-control input-sm"
 										value="#{searchFilterBean.topNumber}"
-										valueChangeListener="#{searchFilterBean.loadList}" 
+										valueChangeListener="#{searchFilterBean.topNumberChanged}" 
                      					onchange="submit()">
 										<f:selectItem id="top10" itemLabel="10" itemValue="10" />
 										<f:selectItem id="top20" itemLabel="20" itemValue="20" />
@@ -236,8 +236,9 @@
 										<div class="col-sm-12">
 											<div class="panel panel-default">
 												<div class="panel-heading">
+													<div class="row">
 													<h3 class="panel-title">
-														(#{route.routeProfile.ratio}) #{route.id}
+														(#{route.routeProfile.ratio}) #{route.name}
 														<h:panelGroup rendered="#{not route.done}">
 															<div class="pull-right">
 																<h:commandLink type="button"
@@ -250,6 +251,10 @@
 															</div>
 														</h:panelGroup>
 													</h3>
+													</div>
+													<div class="row">
+														<a href="#{route.id}">Ver ruta</a>
+													</div>
 												</div>
 												<div class="panel-body">
 													<div class="col-md-3">

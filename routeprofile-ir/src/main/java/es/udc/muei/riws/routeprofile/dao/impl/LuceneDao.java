@@ -357,8 +357,8 @@ public class LuceneDao implements IRDao {
 						FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.name()));
 				String latitude = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LATITUDE.name());
 				String longitude = reader.document(docs.scoreDocs[i].doc).get(FieldsEnum.PR_LONGITUDE.name());
-
-				result.add(new RouteDTO(id, distance, looped, maxElevation, minElevation, elevationGainUp,
+				String name = reader.document(docs.scoreDocs[i].doc).get("title");
+				result.add(new RouteDTO(id, name, distance, looped, maxElevation, minElevation, elevationGainUp,
 						elevationGainDown, user.getRouteIds().contains(id), latitude, longitude));
 			}
 			close();

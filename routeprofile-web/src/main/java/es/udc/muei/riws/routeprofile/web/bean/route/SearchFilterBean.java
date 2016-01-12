@@ -211,6 +211,12 @@ public class SearchFilterBean extends BaseBean {
 		this.topNumber = topNumber;
 	}
 
+	public void topNumberChanged(ValueChangeEvent e) {
+		// assign new value to localeCode
+		this.topNumber = Integer.parseInt(e.getNewValue().toString());
+		loadList();
+	}
+
 	public Double getMax() {
 		return max;
 	}
