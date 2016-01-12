@@ -2,16 +2,18 @@ package es.udc.muei.riws.routeprofile.web.bean.route;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
+import javax.management.InstanceNotFoundException;
 
 import es.udc.muei.riws.routeprofile.model.dto.FilterDTO;
 import es.udc.muei.riws.routeprofile.model.dto.FilterRangeDTO;
 import es.udc.muei.riws.routeprofile.model.dto.FilterValueDTO;
-import es.udc.muei.riws.routeprofile.model.dto.LocationDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteProfileDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
@@ -23,46 +25,80 @@ import es.udc.muei.riws.routeprofile.web.bean.util.BaseBean;
 @ViewScoped
 public class SearchFilterBean extends BaseBean {
 
-	/**
-     * 
-     */
 	private static final long serialVersionUID = 9004691753635927414L;
 
 	private static final int COUNT = 100;
+	private static final Integer SCORE_BY_LOCATION = 0;
+	private static final Integer SCORE_BY_ROUTEPROFILE = 1;
 
+	private String resultSize;
+	private Integer topNumber;
 	private Collection<RouteDTO> routes = new ArrayList<RouteDTO>();
 	private Collection<FilterDTO> filters = new ArrayList<FilterDTO>();
 	private RouteProfileDTO routeProfile = new RouteProfileDTO();
 
 	private FieldsEnum field;
-	private FieldsEnum[] itemsField = FieldsEnum.values();
+	// private FieldsEnum[] itemsField = FieldsEnum.values();
+	private Map<FieldsEnum, String> itemsField;
 	private Double max;
 	private Double min;
 	private String value;
-	private LocationDTO location = null;
+
+	// Geolocation ranking
+	private Map<Integer, String> scoreTypes;
+	private Integer scoreType;
 
 	@PostConstruct
 	public void init() {
-		// field = FieldsEnum.PR_DISTANCE;
-		// min = (double) 20;
-		// max = (double) 90;
-		// addFilterRange();
+		itemsField = new LinkedHashMap<FieldsEnum, String>();
+		itemsField.put(FieldsEnum.PR_DISTANCE, FieldsEnum.PR_DISTANCE.getName());
+		itemsField.put(FieldsEnum.PR_LOOP, FieldsEnum.PR_LOOP.getName());
+		itemsField.put(FieldsEnum.PR_ELEVATION_MIN, FieldsEnum.PR_ELEVATION_MIN.getName());
+		itemsField.put(FieldsEnum.PR_ELEVATION_MAX, FieldsEnum.PR_ELEVATION_MAX.getName());
+		itemsField.put(FieldsEnum.PR_ELEVATION_GAIN_UP_HILL, FieldsEnum.PR_ELEVATION_GAIN_UP_HILL.getName());
+		itemsField.put(FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL, FieldsEnum.PR_ELEVATION_GAIN_DOWN_HILL.getName());
+
+		scoreTypes = new LinkedHashMap<Integer, String>();
+		scoreTypes.put(SCORE_BY_LOCATION, "Proximidad");
+		scoreTypes.put(SCORE_BY_ROUTEPROFILE, "Perfil de ruta");
+
+		resultSize = "Todavía no se ha efectuado ninguna búsqueda";
+
+		try {
+			routeProfile = super.getRouteProfileService().findRouteProfile(super.getSessionBean().getUser());
+			if (routeProfile.getNumDone() > 0)
+				scoreType = SCORE_BY_ROUTEPROFILE;
+			else
+				scoreType = SCORE_BY_LOCATION;
+		} catch (IRException e) {
+			scoreType = SCORE_BY_LOCATION;
+		}
+		topNumber = 20;
 		loadList();
 	}
 
-	private void loadList() {
+	public void loadList() {
 		try {
 			field = null;
 			max = null;
 			min = null;
 			value = null;
 			routeProfile = super.getRouteProfileService().findRouteProfile(super.getSessionBean().getUser());
-			if (routeProfile.getNumDone() == 0)
-				routes = super.getRouteProfileService().findAllRoutes(this.sessionBean.getUser(), COUNT);
-			else
-				routes = super.getRouteProfileService().findRoutesRouteProfileScore(this.sessionBean.getUser(),
-						filters, routeProfile, COUNT);
-			System.out.println("Load " + routes.size() + " routes");
+
+			if (routeProfile.getNumDone() == 0 && sessionBean.getLocation() == null)
+				routes = super.getRouteProfileService().findAllRoutes(this.sessionBean.getUser(), getCount());
+			else {
+				if (routeProfile.getNumDone() > 0 && scoreType.equals(SCORE_BY_ROUTEPROFILE)) {
+					routes = super.getRouteProfileService().findRoutesRouteProfileScore(this.sessionBean.getUser(),
+							filters, routeProfile, getCount());
+					// setScoreType(RouteProfileScore.class);
+				} else {
+					routes = super.getRouteProfileService().findRoutesByLocationScore(this.sessionBean.getUser(),
+							filters, sessionBean.getLocation(), getCount());
+					// setScoreType(RouteLocationScore.class);
+				}
+			}
+			resultSize = "Se han encontrado " + routes.size() + " resultados";
 		} catch (IRException e) {
 			super.print("No se ha podido realizar la búsqueda, comprueba los filtros y/o recargue la página");
 		}
@@ -86,10 +122,13 @@ public class SearchFilterBean extends BaseBean {
 		try {
 			UserDTO user = super.getSessionBean().getUser();
 			user.addRoute(id);
-			super.getSessionBean().setUser(super.getRouteProfileService().updateUser(user));
+			UserDTO updatedUser = super.getRouteProfileService().updateUser(user);
+			super.getSessionBean().setUser(updatedUser);
 			loadList();
 		} catch (IRException e) {
 			super.print("No se ha podido añadir la ruta");
+		} catch (InstanceNotFoundException e) {
+			e.printStackTrace();
 		}
 
 	}
@@ -126,12 +165,50 @@ public class SearchFilterBean extends BaseBean {
 		this.field = field;
 	}
 
-	public FieldsEnum[] getItemsField() {
-		return itemsField;
+	public Map<FieldsEnum, String> getItemsField() {
+		return (itemsField);
 	}
 
-	public void setItemsField(FieldsEnum[] itemsField) {
+	public void setItemsField(Map<FieldsEnum, String> itemsField) {
 		this.itemsField = itemsField;
+	}
+
+	public Map<Integer, String> getScoreTypes() {
+		return scoreTypes;
+	}
+
+	public void setScoreTypes(Map<Integer, String> scoreTypes) {
+		this.scoreTypes = scoreTypes;
+	}
+
+	public Integer getScoreType() {
+		return scoreType;
+	}
+
+	public void setScoreType(Integer scoreType) {
+		this.scoreType = scoreType;
+	}
+
+	public void scoreTypeChanged(ValueChangeEvent e) {
+		// assign new value to localeCode
+		this.scoreType = Integer.parseInt(e.getNewValue().toString());
+		loadList();
+	}
+
+	public String getResultSize() {
+		return resultSize;
+	}
+
+	public void setResultSize(String resultSize) {
+		this.resultSize = resultSize;
+	}
+
+	public Integer getTopNumber() {
+		return topNumber;
+	}
+
+	public void setTopNumber(Integer topNumber) {
+		this.topNumber = topNumber;
 	}
 
 	public Double getMax() {
@@ -162,16 +239,8 @@ public class SearchFilterBean extends BaseBean {
 		return serialVersionUID;
 	}
 
-	public static int getCount() {
-		return COUNT;
-	}
-
-	public void saveLocation() {
-		double latitude = Double.parseDouble(FacesContext.getCurrentInstance().getExternalContext()
-				.getRequestParameterMap().get("latitude"));
-		double longitude = Double.parseDouble(FacesContext.getCurrentInstance().getExternalContext()
-				.getRequestParameterMap().get("longitude"));
-		this.location = new LocationDTO(latitude, longitude);
+	public int getCount() {
+		return (topNumber == null ? COUNT : topNumber);
 	}
 
 }

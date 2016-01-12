@@ -14,7 +14,6 @@
 						<div class="row">
 							<div class="page-header">
 								<h1>Búsqueda por filtros</h1>
-								<p:remoteCommand name="myRemoteCommand" process="@this" autoRun="false" action="#{searchFilterBean.saveLocation}" />
 							</div>
 							<div class="row">
 								<div class="col-sm-12">
@@ -34,7 +33,9 @@
 																	<h:selectOneMenu id="fieldRange" class="form-control input-sm"
 																		value="#{searchFilterBean.field}">
 																		<f:selectItem itemLabel=" Selecciona " />
-																		<f:selectItems value="#{searchFilterBean.itemsField}" />
+<!-- 																			<f:selectItems value="#{searchFilterBean.itemsField}" /> -->
+																			<f:selectItems value="#{searchFilterBean.itemsField.entrySet()}" var="entry"
+																				itemValue="#{entry.key}" itemLabel="#{entry.value}" />
 																	</h:selectOneMenu>
 																</div>
 																<div class="col-md-4 form-group">
@@ -74,7 +75,9 @@
 																		<h:selectOneMenu id="fieldValue" class="form-control input-sm"
 																			value="#{searchFilterBean.field}">
 																			<f:selectItem itemLabel=" Selecciona " />
-																			<f:selectItems value="#{searchFilterBean.itemsField}" />
+<!-- 																			<f:selectItems value="#{searchFilterBean.itemsField}" /> -->
+																			<f:selectItems value="#{searchFilterBean.itemsField.entrySet()}" var="entry"
+																				itemValue="#{entry.key}" itemLabel="#{entry.value}" />
 																		</h:selectOneMenu>
 																	</div>
 																	<div class="col-md-4 form-group">
@@ -108,14 +111,14 @@
 																	<h3 class="panel-title">#{filter.field}</h3>
 																</div>
 																<h:panelGroup
-																	rendered="#{not (filter.field == 'PR_LOOP' || filter.field == 'url')}">
+																	rendered="#{(filter['class'].simpleName eq 'FilterRangeDTO') and not(filter.field == 'PR_LOOP')}">
 																	<div class="panel-body">
 																		<label>Máximo</label> <span class="badge">#{filter.max}</span>
 																		<label>Mínimo</label> <span class="badge">#{filter.min}</span>
 																	</div>
 																</h:panelGroup>
 																<h:panelGroup
-																	rendered="#{filter.field == 'PR_LOOP' || filter.field == 'url'}">
+																	rendered="#{filter['class'].simpleName eq 'FilterValueDTO'}">
 																	<div class="panel-body">
 																		<label>Valor</label> <span class="badge">#{filter.value}</span>
 																	</div>
@@ -199,6 +202,34 @@
 								<h1>Rutas</h1>
 							</div>
 							<div class="row">
+								<div class="col-md-4 form-group">
+									<label>Ordenar por:</label>
+									<h:selectOneMenu id="scoreTypeMenu" class="form-control input-sm"
+										value="#{searchFilterBean.scoreType}"
+										valueChangeListener="#{searchFilterBean.scoreTypeChanged}" 
+                     					onchange="submit()">
+										<f:selectItems value="#{searchFilterBean.scoreTypes.entrySet()}" var="entry"
+											itemValue="#{entry.key}" itemLabel="#{entry.value}" />
+									</h:selectOneMenu>
+								</div>
+								<div class="col-md-4 form-group">
+									<label>Número resultados</label>
+									<h:selectOneMenu id="scoreType" class="form-control input-sm"
+										value="#{searchFilterBean.topNumber}"
+										valueChangeListener="#{searchFilterBean.loadList}" 
+                     					onchange="submit()">
+										<f:selectItem id="top10" itemLabel="10" itemValue="10" />
+										<f:selectItem id="top20" itemLabel="20" itemValue="20" />
+										<f:selectItem id="top50" itemLabel="50" itemValue="50" />
+										<f:selectItem id="top100" itemLabel="100" itemValue="100" />
+										<f:selectItem id="top150" itemLabel="150" itemValue="150" />
+									</h:selectOneMenu>
+								</div>
+							</div>
+							<div class="row">
+								<h:outputLabel id="resultSizeLabel" value="#{searchFilterBean.resultSize}" />
+							</div>
+							<div class="row">
 								<h:panelGroup id="routes">
 
 									<ui:repeat var="route" value="#{searchFilterBean.routes}">
@@ -262,10 +293,6 @@
 						</div>
 					</div>
 				</h:form>
-					    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="#{request.contextPath}/resources/js/googlemaps.where.js"></script>
 			</f:view>
 		</ui:define>
 	</ui:composition>

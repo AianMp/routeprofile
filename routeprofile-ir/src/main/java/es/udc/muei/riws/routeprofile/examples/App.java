@@ -18,7 +18,7 @@ public class App {
 		try {
 			// IRDao dao = new LuceneDao();
 			// System.out.println("buuuu");
-			rps.signUp("jcascas1", "qwerty");
+			// rps.signUp("jcascas1", "qwerty");
 			Collection<String> b = new ArrayList<String>();
 			b.add("jcascas1");
 			Collection<UserDTO> users = rps.findUsers(b);
@@ -42,14 +42,12 @@ public class App {
 			// Collection<RouteDTO> userRoutes = rps.findRoutesById(updatedUser,
 			// updatedUser.getRouteIds());
 			// System.out.println("Routes done by user: " + userRoutes);
-			Collection<RouteDTO> routes = rps.findAllRoutes(updatedUser, 30);
+			// Collection<RouteDTO> routes = rps.findAllRoutes(updatedUser, 30);
 			// Collection<FilterDTO> filters = new ArrayList<FilterDTO>();
 			// FilterDTO fDistance = new FilterRangeDTO(FieldsEnum.PR_DISTANCE,
 			// 22., 90.);
 			// filters.add(fDistance);
-			// Collection<RouteDTO> routes =
-			// rps.findRoutesByLocationScore(updatedUser, filters, location,
-			// 10);
+			Collection<RouteDTO> routes = rps.findRoutesByLocationScore(updatedUser, null, location, 30);
 			System.out.println(routes);
 
 		} catch (IRException e) {

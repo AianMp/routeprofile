@@ -42,7 +42,7 @@ public class RouteLocationScoreProvider extends CustomScoreProvider {
 
 	@Override
 	public float customScore(int doc, float subQueryScore, float valSrcScore) throws IOException {
-		return (computeScore(locations.get(doc), subQueryScore));
+		return (computeScore(locations.get(doc), valSrcScore));
 	}
 
 	private Explanation customExplain(int doc, Explanation subQueryExpl) {

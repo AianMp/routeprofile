@@ -7,13 +7,14 @@ import es.udc.muei.riws.routeprofile.model.dto.LocationDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteProfileDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
+import es.udc.muei.riws.routeprofile.model.exception.DuplicateUserException;
 import es.udc.muei.riws.routeprofile.model.exception.IRException;
 
 public interface IRDao {
 
 	public Collection<RouteDTO> findRoutes(UserDTO user, Collection<FilterDTO> filters, int count) throws IRException;
 
-	public UserDTO createUser(UserDTO newUser) throws IRException;
+	public UserDTO createUser(UserDTO newUser) throws IRException, DuplicateUserException;
 
 	public void updateUser(UserDTO updatedUser) throws IRException;
 

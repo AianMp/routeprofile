@@ -42,6 +42,7 @@ import es.udc.muei.riws.routeprofile.model.dto.LocationDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteDTO;
 import es.udc.muei.riws.routeprofile.model.dto.RouteProfileDTO;
 import es.udc.muei.riws.routeprofile.model.dto.UserDTO;
+import es.udc.muei.riws.routeprofile.model.exception.DuplicateUserException;
 import es.udc.muei.riws.routeprofile.model.exception.IRException;
 import es.udc.muei.riws.routeprofile.util.ConfigurationParametersManager;
 import es.udc.muei.riws.routeprofile.util.FieldsEnum;
@@ -111,16 +112,21 @@ public class LuceneDao implements IRDao {
 		try {
 			BooleanQuery finalQuery = new BooleanQuery();
 			QueryParser parser;
-			for (FilterDTO filter : filters) {
-				if (filter instanceof FilterRangeDTO) {
-					finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(), ((FilterRangeDTO) filter)
-							.getMin().toString(), ((FilterRangeDTO) filter).getMax().toString(), true, true),
-							Occur.MUST);
-				}
-				if (filter instanceof FilterValueDTO) {
-					parser = new QueryParser(Version.LUCENE_48, filter.getField().name(), new StandardAnalyzer(
-							Version.LUCENE_48));
-					finalQuery.add(parser.parse(((FilterValueDTO) filter).getValue().toString()), Occur.MUST);
+			// First condition: url must be a route.
+			finalQuery.add(new QueryParser(Version.LUCENE_48, FieldsEnum.url.name(), new StandardAnalyzer(
+					Version.LUCENE_48)).parse("view"), Occur.MUST);
+			if (filters != null && !filters.isEmpty()) {
+				for (FilterDTO filter : filters) {
+					if (filter instanceof FilterRangeDTO) {
+						finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(),
+								((FilterRangeDTO) filter).getMin().toString(), ((FilterRangeDTO) filter).getMax()
+										.toString(), true, true), Occur.MUST);
+					}
+					if (filter instanceof FilterValueDTO) {
+						parser = new QueryParser(Version.LUCENE_48, filter.getField().name(), new StandardAnalyzer(
+								Version.LUCENE_48));
+						finalQuery.add(parser.parse(((FilterValueDTO) filter).getValue().toString()), Occur.MUST);
+					}
 				}
 			}
 			TopDocs topDocs = null;
@@ -143,12 +149,12 @@ public class LuceneDao implements IRDao {
 	}
 
 	@Override
-	public UserDTO createUser(UserDTO newUser) throws IRException {
+	public UserDTO createUser(UserDTO newUser) throws IRException, DuplicateUserException {
 		Collection<String> usernames = new ArrayList<String>();
 		usernames.add(newUser.getUsername());
 		Collection<UserDTO> users = findUsers(usernames);
 		if (users.contains(newUser))
-			return (newUser);
+			throw new DuplicateUserException(newUser.getUsername());
 		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
 		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
 		config.setOpenMode(OpenMode.APPEND);
@@ -254,16 +260,22 @@ public class LuceneDao implements IRDao {
 		try {
 			BooleanQuery finalQuery = new BooleanQuery();
 			QueryParser parser;
-			for (FilterDTO filter : filters) {
-				if (filter instanceof FilterRangeDTO) {
-					finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(), ((FilterRangeDTO) filter)
-							.getMin().toString(), ((FilterRangeDTO) filter).getMax().toString(), true, true),
-							Occur.MUST);
-				}
-				if (filter instanceof FilterValueDTO) {
-					parser = new QueryParser(Version.LUCENE_48, filter.getField().name(), new StandardAnalyzer(
-							Version.LUCENE_48));
-					finalQuery.add(parser.parse(((FilterValueDTO) filter).getValue().toString()), Occur.MUST);
+			// First condition: url must be a route.
+			finalQuery.add(new QueryParser(Version.LUCENE_48, FieldsEnum.url.name(), new StandardAnalyzer(
+					Version.LUCENE_48)).parse("view"), Occur.MUST);
+			if (filters != null && !filters.isEmpty()) {
+
+				for (FilterDTO filter : filters) {
+					if (filter instanceof FilterRangeDTO) {
+						finalQuery.add(TermRangeQuery.newStringRange(filter.getField().name(),
+								((FilterRangeDTO) filter).getMin().toString(), ((FilterRangeDTO) filter).getMax()
+										.toString(), true, true), Occur.MUST);
+					}
+					if (filter instanceof FilterValueDTO) {
+						parser = new QueryParser(Version.LUCENE_48, filter.getField().name(), new StandardAnalyzer(
+								Version.LUCENE_48));
+						finalQuery.add(parser.parse(((FilterValueDTO) filter).getValue().toString()), Occur.MUST);
+					}
 				}
 			}
 			TopDocs topDocs = null;
